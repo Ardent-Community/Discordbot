@@ -15,4 +15,4 @@ async def greetings(ctx):
     await ctx.send(random.choice(greet_msgs))
 
 
-client.run("ODU4NDA1MTUyMjQyNDAxMzMw.YNdqGA.hK9OJTuSyz4pG3fMP4-cQFwLblQ")
+client.run("token")
