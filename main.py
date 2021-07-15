@@ -8,8 +8,8 @@ import os
 default_prefix="h!"
 color_var=discord.Color.from_rgb(0, 235, 0)
 prefix={}
+global mess
 mess=None
-    
 client=commands.Bot(command_prefix=default_prefix)
 
 @client.event
@@ -33,9 +33,9 @@ async def help_menu(ctx):
     embed.add_field(name="Questions", value="h!FAQ to drop your questions and our team will answer")
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
-@tasks.loop(minutes=2)
+@tasks.loop(seconds=5)
 async def instag():
-    print("repeat")
+    global mess
     if mess!=None:
         user=InstagramUser("testforhackathonbot",sessionid="48297384187%3AYfiE4AoNcVSsdQ%3A26")
         print(user)
@@ -56,6 +56,7 @@ async def wait_for_ready():
     await client.wait_until_ready()
 @client.command()
 async def insta(ctx):
+    global mess
     user=InstagramUser("testforhackathonbot",sessionid="48297384187%3AYfiE4AoNcVSsdQ%3A26")
     print(user)
     url=user.posts[0].post_url
