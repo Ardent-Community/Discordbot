@@ -1,22 +1,18 @@
 import discord
 from discord.ext import commands, tasks
 import json
+import random
 import os
-import token
-intent=discord.Intents.default()
-intent.members=True
 default_prefix="h!"
 prefix={}
-client=commands.Bot(command_prefix=default_prefix,intents=intent)
-os.environ(token)
+client=commands.Bot(command_prefix=default_prefix)
 @client.command(aliases=['p'])
 async def ping(ctx):
-    await ctx.send("Pong\nLatency: "+client.latency)
+    await ctx.send("Pong\nLatency: "+str(client.latency*1000))
 @client.command(aliases=["hi","hello","hey"])
 async def greetings(ctx):   
     greet_msgs = ["Hi {}!".format(ctx.author.name), "Hey {}!".format(ctx.author.name), "How are you {}?".format(ctx.author.name), "How's it going {}?".format(ctx.author.name)]
-
-
+    await ctx.send(random.choice(greet_msgs))
 @client.command(aliases=["use",'help','info'])
 async def help_menu(ctx):
     embed = discord.Embed(title="Command Menu", color=discord.Color.from_rgb(0, 235, 0))
@@ -26,5 +22,13 @@ async def help_menu(ctx):
     embed.set_thumbnail(name="Questions", value="h!FAQ to drop your questions and our team will answer")
     embed.set_thumbnail(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
+    
+file = open("../env.txt","r")
+txt_from_file = str(file.read())
+start_token = txt_from_file.find("token=") + len("token=")
+end_token = txt_from_file.find('"',start_token + 3) + 1
+client.run(eval(txt_from_file[start_token:end_token]))
 
-client.run("token")
+
+
+
