@@ -3,11 +3,19 @@ from discord.ext import commands, tasks
 import json
 import random
 from instagramy import *
+from instascrape import *
 import os
 default_prefix="h!"
 color_var=discord.Color.from_rgb(0, 235, 0)
 prefix={}
+mess=None
+    
 client=commands.Bot(command_prefix=default_prefix)
+
+@client.event
+async def on_ready():
+    print("Ready")
+    instag.start()
 @client.command(aliases=['p'])
 async def ping(ctx):
     await ctx.send("Pong\nLatency: "+str(client.latency*1000))
@@ -25,16 +33,43 @@ async def help_menu(ctx):
     embed.add_field(name="Questions", value="h!FAQ to drop your questions and our team will answer")
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
+@tasks.loop(minutes=2)
+async def instag():
+    print("repeat")
+    if mess!=None:
+        user=InstagramUser("testforhackathonbot",sessionid="48297384187%3AYfiE4AoNcVSsdQ%3A26")
+        print(user)
+        url=user.posts[0].post_url
+        pos=Post(url)
+        headers = {
+        "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
+        "cookie": "sessionid=48297384187%3AYfiE4AoNcVSsdQ%3A26;"}
+        pos.scrape(headers=headers)    
+        descript=pos.caption
+        thumb=user.profile_picture_url
+        embed=discord.Embed(title="Insta",description=descript, color=color_var)
+        embed.set_image(url=user.posts[0].post_source)
+        embed.set_thumbnail(url=thumb)
+        await mess.edit(embed=embed)
+@instag.before_loop
+async def wait_for_ready():
+    await client.wait_until_ready()
 @client.command()
 async def insta(ctx):
-    user=InstagramUser("testforhackathonbot")
+    user=InstagramUser("testforhackathonbot",sessionid="48297384187%3AYfiE4AoNcVSsdQ%3A26")
     print(user)
-    descript=user.posts[0].caption
+    url=user.posts[0].post_url
+    pos=Post(url)
+    headers = {
+    "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
+    "cookie": "sessionid=48297384187%3AYfiE4AoNcVSsdQ%3A26;"}
+    pos.scrape(headers=headers)    
+    descript=pos.caption
     thumb=user.profile_picture_url
     embed=discord.Embed(title="Insta",description=descript, color=color_var)
     embed.set_image(url=user.posts[0].post_source)
     embed.set_thumbnail(url=thumb)
-    await ctx.send(embed=embed)
+    mess=await ctx.send(embed=embed)
     
 file = open("../env.txt","r")
 txt_from_file = str(file.read())
