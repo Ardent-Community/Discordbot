@@ -17,7 +17,7 @@ client.remove_command("help")
 @client.command(aliases=["use",'help','info'])
 async def help_menu(ctx):
     embed = discord.Embed(title="Command Menu", color=discord.Color.from_rgb(0, 235, 0))
-    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/858234706305482785/865191551444844544/hackathonlogo.png")
+    embed.set_thumbnail(url="https://media.discordapp.net/attachments/858234744079515668/865199128371265556/hackathonlogo2.png")
     embed.add_field(name="Social",value="h!insta to get insta feed\nh!tweet to get twitter feed")
     embed.add_field(name="Events", value="h!hdt to get hackathon dates")
     embed.add_field(name="Questions", value="h!FAQ to drop your questions and our team will answer")
