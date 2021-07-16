@@ -5,6 +5,10 @@ import random
 from instagramy import *
 from instascrape import *
 import os
+import twint
+import nest_asyncio
+nest_asyncio.apply()
+twitter_update_channel = 865429347594403850
 default_prefix="h!"
 color_var=discord.Color.from_rgb(0, 235, 0)
 prefix={}
@@ -81,6 +85,15 @@ async def insta(ctx):
     embed.set_image(url=user.posts[0].post_source)
     embed.set_thumbnail(url=thumb)
     await ctx.send(embed=embed)
+@client.command(aliases=["tweet"])
+async def fetch_tweets(ctx):
+    t = twint.Config()
+    t.Search = "from:@Paz50982472"
+    t.limit = 10
+    t.Output="output.txt"
+    tlist=twint.run.Search(t)
+    #update_channel = client.get_channel(twitter_update_channel)
+    #await update_channel.send(tlist)
     
 file = open("../env.txt","r")
 txt_from_file = str(file.read())
