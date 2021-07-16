@@ -20,6 +20,15 @@ SESSIONID=""
 old_posts=[]
 client=commands.Bot(command_prefix=default_prefix)
 
+consumer_key = ""
+consumer_secret = ""
+access_key = ""
+access_secret = ""
+
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_key, access_secret)
+api = tweepy.API(auth)
+
 @client.event
 async def on_ready():
     print("Ready")
@@ -96,10 +105,14 @@ async def insta(ctx):
         SESSIONID=get_it()
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
-    t = twint.Config()
-    t.Search = "from:@Paz50982472"
-    t.limit = 10
-    tlist=twint.run.Search(t)
+    new_tweets = api.user_timeline(screen_name="@Paz50982472",count=1, tweet_mode="extended")
+    for each in new_tweets:
+        latest_tweet = each.text
+    latest_tweet_id = 0
+    for each in new_tweets:
+        if 'media' in each.entities:
+            for image in  each.entities['media']:
+                latest_img = image['media_url'])
     #update_channel = client.get_channel(twitter_update_channel)
     #await update_channel.send(tlist)
     
