@@ -19,15 +19,15 @@ channel=0
 SESSIONID=""
 old_posts=[]
 client=commands.Bot(command_prefix=default_prefix)
+if False:
+    consumer_key = ""
+    consumer_secret = ""
+    access_key = ""
+    access_secret = ""
 
-consumer_key = ""
-consumer_secret = ""
-access_key = ""
-access_secret = ""
-
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_key, access_secret)
-api = tweepy.API(auth)
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_key, access_secret)
+    api = tweepy.API(auth)
 
 @client.event
 async def on_ready():
@@ -56,21 +56,22 @@ async def help_menu(ctx):
     embed.add_field(name="Questions", value="h!FAQ to drop your questions and our team will answer")
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
-@tasks.loop(seconds=5)
+@tasks.loop(minutes=2)
 async def instag():
     global channel, old_posts, SESSIONID
+    print(old_posts)
+    print(channel)
     if channel!=0:
         try:
-            user=InstagramUser("testforhackathonbot",sessionid=SESSIONID)
-            print(user)
+            user=InstagramUser("alvinalvinalvin437",sessionid=SESSIONID)
+            print(len(user.posts))
             url=user.posts[0].post_url
-            if not url in old_posts:
-                old_posts+=[url]
+            if not url in old_posts:                
                 cha=client.get_channel(channel)
                 pos=Post(url)
                 headers = {
                 "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
-                "cookie": "sessionid=48297384187%3AYfiE4AoNcVSsdQ%3A26;"}
+                "cookie": "sessionid="+SESSIONID+";"}
                 pos.scrape(headers=headers)    
                 descript=pos.caption
                 thumb=user.profile_picture_url
@@ -78,8 +79,11 @@ async def instag():
                 embed.set_image(url=user.posts[0].post_source)
                 embed.set_thumbnail(url=thumb)
                 await cha.send(embed=embed)
-        except:
+                old_posts+=[url]
+        except Exception as e:
+            print(e)
             SESSIONID=get_it()
+            print(SESSIONID)
 @instag.before_loop
 async def wait_for_ready():
     await client.wait_until_ready()
@@ -87,13 +91,13 @@ async def wait_for_ready():
 async def insta(ctx):
     global SESSIONID
     try:
-        user=InstagramUser("testforhackathonbot",sessionid=SESSIONID)
+        user=InstagramUser("alvinalvinalvin437",sessionid=SESSIONID)
         print(user)
         url=user.posts[0].post_url
         pos=Post(url)
         headers = {
         "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
-        "cookie": SESSIONID}
+        "cookie": "sessionid="+SESSIONID+";"}
         pos.scrape(headers=headers)    
         descript=pos.caption
         thumb=user.profile_picture_url
@@ -101,8 +105,10 @@ async def insta(ctx):
         embed.set_image(url=user.posts[0].post_source)
         embed.set_thumbnail(url=thumb)
         await ctx.send(embed=embed)
-    except:
+    except Exception as e:
+        print(e)
         SESSIONID=get_it()
+        print(SESSIONID)
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
     new_tweets = api.user_timeline(screen_name="@Paz50982472",count=1, tweet_mode="extended")
@@ -112,7 +118,7 @@ async def fetch_tweets(ctx):
     for each in new_tweets:
         if 'media' in each.entities:
             for image in  each.entities['media']:
-                latest_img = image['media_url'])
+                latest_img = image['media_url']
     #update_channel = client.get_channel(twitter_update_channel)
     #await update_channel.send(tlist)
     
