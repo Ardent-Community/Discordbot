@@ -71,26 +71,28 @@ async def wait_for_ready():
     await client.wait_until_ready()
 @client.command()
 async def insta(ctx):
-    user=InstagramUser("testforhackathonbot",sessionid="48297384187%3AYfiE4AoNcVSsdQ%3A26")
-    print(user)
-    url=user.posts[0].post_url
-    pos=Post(url)
-    headers = {
-    "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
-    "cookie": "sessionid=48297384187%3AYfiE4AoNcVSsdQ%3A26;"}
-    pos.scrape(headers=headers)    
-    descript=pos.caption
-    thumb=user.profile_picture_url
-    embed=discord.Embed(title="Insta",description=descript, color=color_var)
-    embed.set_image(url=user.posts[0].post_source)
-    embed.set_thumbnail(url=thumb)
-    await ctx.send(embed=embed)
+    try:
+        user=InstagramUser("testforhackathonbot",sessionid=SESSIONID)
+        print(user)
+        url=user.posts[0].post_url
+        pos=Post(url)
+        headers = {
+        "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
+        "cookie": SESSIONID}
+        pos.scrape(headers=headers)    
+        descript=pos.caption
+        thumb=user.profile_picture_url
+        embed=discord.Embed(title="Insta",description=descript, color=color_var)
+        embed.set_image(url=user.posts[0].post_source)
+        embed.set_thumbnail(url=thumb)
+        await ctx.send(embed=embed)
+    except:
+        pass
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
     t = twint.Config()
     t.Search = "from:@Paz50982472"
     t.limit = 10
-    t.Output="output.txt"
     tlist=twint.run.Search(t)
     #update_channel = client.get_channel(twitter_update_channel)
     #await update_channel.send(tlist)
