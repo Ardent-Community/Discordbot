@@ -7,14 +7,16 @@ from instascrape import *
 import os
 import twint
 import nest_asyncio
+from sessID import *
 nest_asyncio.apply()
 twitter_update_channel = 865429347594403850
 default_prefix="h!"
 color_var=discord.Color.from_rgb(0, 235, 0)
 prefix={}
 
-global channel
+global channel, SESSIONID
 channel=0
+SESSIONID=""
 old_posts=[]
 client=commands.Bot(command_prefix=default_prefix)
 
@@ -47,30 +49,34 @@ async def help_menu(ctx):
     await ctx.send(embed=embed)
 @tasks.loop(seconds=5)
 async def instag():
-    global channel, old_posts
+    global channel, old_posts, SESSIONID
     if channel!=0:
-        user=InstagramUser("testforhackathonbot",sessionid="48297384187%3AYfiE4AoNcVSsdQ%3A26")
-        print(user)
-        url=user.posts[0].post_url
-        if not url in old_posts:
-            old_posts+=[url]
-            cha=client.get_channel(channel)
-            pos=Post(url)
-            headers = {
-            "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
-            "cookie": "sessionid=48297384187%3AYfiE4AoNcVSsdQ%3A26;"}
-            pos.scrape(headers=headers)    
-            descript=pos.caption
-            thumb=user.profile_picture_url
-            embed=discord.Embed(title="Insta",description=descript, color=color_var)
-            embed.set_image(url=user.posts[0].post_source)
-            embed.set_thumbnail(url=thumb)
-            await cha.send(embed=embed)
+        try:
+            user=InstagramUser("testforhackathonbot",sessionid=SESSIONID)
+            print(user)
+            url=user.posts[0].post_url
+            if not url in old_posts:
+                old_posts+=[url]
+                cha=client.get_channel(channel)
+                pos=Post(url)
+                headers = {
+                "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
+                "cookie": "sessionid=48297384187%3AYfiE4AoNcVSsdQ%3A26;"}
+                pos.scrape(headers=headers)    
+                descript=pos.caption
+                thumb=user.profile_picture_url
+                embed=discord.Embed(title="Insta",description=descript, color=color_var)
+                embed.set_image(url=user.posts[0].post_source)
+                embed.set_thumbnail(url=thumb)
+                await cha.send(embed=embed)
+        except:
+            SESSIONID=get_it()
 @instag.before_loop
 async def wait_for_ready():
     await client.wait_until_ready()
 @client.command()
 async def insta(ctx):
+    global SESSIONID
     try:
         user=InstagramUser("testforhackathonbot",sessionid=SESSIONID)
         print(user)
@@ -87,7 +93,7 @@ async def insta(ctx):
         embed.set_thumbnail(url=thumb)
         await ctx.send(embed=embed)
     except:
-        pass
+        SESSIONID=get_it()
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
     t = twint.Config()

@@ -1,32 +1,47 @@
-import re
-import requests
+import requests, hashlib
+file = open("../pass.txt","r")
+txt_from_file = str(file.read())
+start_token = txt_from_file.find("username=") + len("username=")
+end_token = txt_from_file.find('"',start_token + 3) + 1
+username=(eval(txt_from_file[start_token:end_token]))
+start_token = txt_from_file.find("password=") + len("password=")
+end_token = txt_from_file.find('"',start_token + 3) + 1
+password=(eval(txt_from_file[start_token:end_token]))
 
-from datetime import datetime
+def get_sessionid(username, password):
+    url = "https://i.instagram.com/api/v1/accounts/login/"
 
-link = 'https://www.instagram.com/accounts/login/'
-login_url = 'https://www.instagram.com/accounts/login/ajax/'
-def get_SessionID():
-    
-    time = int(datetime.now().timestamp())
+    def generate_device_id(username, password):
+        m = hashlib.md5()
+        m.update(username.encode() + password.encode())
+
+        seed = m.hexdigest()
+        volatile_seed = "12345"
+
+        m = hashlib.md5()
+        m.update(seed.encode('utf-8') + volatile_seed.encode('utf-8'))
+        return 'android-' + m.hexdigest()[:16]
+
+    device_id = generate_device_id(username, password)
 
     payload = {
-        'username': '',
-        'enc_password': f'#PWD_INSTAGRAM_BROWSER:0:{time}:<PASSWORD HERE>',
-        'queryParams': {},
-        'optIntoOneTap': 'false'
+        'username': username,
+        'device_id': device_id,
+        'password': password,
     }
 
-    with requests.Session() as s:
-        r = s.get(link)
-        csrf = re.findall(r"csrf_token\":\"(.*?)\"",r.text)[0]
-        r = s.post(login_url,data=payload,headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36",
-            "X-Requested-With": "XMLHttpRequest",
-            "Referer": "https://www.instagram.com/accounts/login/",
-            "x-csrftoken":csrf
-        })
-        print(r.status_code)
-        print(r.url)
-        print(r.text)
+    headers = {
+        'Accept': '*/*',
+        'Content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Accept-Language': 'en-US',
+        'User-Agent': "Instagram 10.26.0 Android"
+    }
 
-        print(s.cookies)
+    response = requests.post(url, headers=headers, data=payload)
+    if response.status_code == 200:
+        return response.cookies.get_dict()['sessionid']
+    
+    return response.text
+
+def get_it():
+    return get_sessionid(username,password)
