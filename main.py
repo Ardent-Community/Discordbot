@@ -157,13 +157,9 @@ async def teval(ctx,*,text):
         await ctx.send(str(e))
 @client.command()
 async def say(ctx, chann:discord.TextChannel,*,say):
-    await chann.send(str(say))
-        
-file = open("../env.txt","r")
-txt_from_file = str(file.read())
-start_token = txt_from_file.find("token=") + len("token=")
-end_token = txt_from_file.find('"',start_token + 3) + 1
-client.run(eval(txt_from_file[start_token:end_token]))
+    await chann.send(str(say))        
+
+client.run(os.getenv('token'))
 
 
 
