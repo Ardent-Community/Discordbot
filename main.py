@@ -18,10 +18,13 @@ default_prefix="h!"
 color_var=discord.Color.from_rgb(0, 235, 0)
 prefix={}
 
-global channel, SESSIONID, latest_tweet_id
+global channel, SESSIONID, latest_tweet_id, roles_allowed
+roles_allowed=[]
 latest_tweet_id = 0
 channel=0
 SESSIONID=""
+Media_present = False
+Extended_entites_present = False
 old_posts=[]
 client=commands.Bot(command_prefix=default_prefix)
 if True:
@@ -61,23 +64,52 @@ async def help_menu(ctx):
     embed.add_field(name="Questions", value="h!FAQ to drop your questions and our team will answer")
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
-@tasks.loop(minutes=2)
+@tasks.loop(minutes=1)
 async def instag():
     global channel, old_posts, SESSIONID, latest_tweet_id
     print(old_posts)
     print(channel)
-    new_tweets = api.user_timeline(screen_name="@Paz50982472",count=1, tweet_mode="extended")
+    new_tweets = api.user_timeline(screen_name="@Microsoft",count=1, tweet_mode="extended")
     if channel!=0:
+        print(new_tweets[0].id)
         if new_tweets[0].id != latest_tweet_id:
-          embed=discord.Embed(title="Twitter",description=new_tweets[0].full_text,color=color_var)
-          if 'media' in new_tweets[0].entities:
-            for image in  new_tweets[0].entities['media']:
-              latest_img = image['media_url']
-          embed.set_image(url=latest_img)
-          embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
-          latest_tweet_id = new_tweets[0].id
-          cha = client.get_channel(channel)
-          await cha.send(embed=embed)
+            for each in new_tweets:
+                Media_present = False
+                Extended_entites_present = False
+                try:
+                     if "extended_entities" in dir(new_tweets[0]):
+                        Extended_entites_present = True
+                except:
+                    pass
+                try:
+                    if "media" in dir(new_tweets[0].entities):
+                        Media_present = True
+                except:
+                    pass
+                cha = client.get_channel(channel)
+                latest_tweet_id = each.id
+                latest_tweet = new_tweets[0].full_text
+                if Extended_entites_present == True or Media_present == True:
+                    embed=discord.Embed(title="Microsoft",description=latest_tweet, color=color_var)
+                    embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
+                    try:
+                        if len(each.extended_entities['media']) > 1:
+                            await cha.send(embed=embed)
+                            for image in each.extended_entities['media']:
+                                latest_img = image['media_url']
+                                embed=discord.Embed(color=color_var)
+                                embed.set_image(url=latest_img)
+                                await cha.send(embed=embed)
+                    except:
+                        for image in each.entities['media']:
+                            embed.set_image(url=latest_img)
+                            await cha.send(embed=embed)
+                else:
+                    embed=discord.Embed(title="Microsoft",description=latest_tweet, color=color_var)
+                    embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
+                    await cha.send(embed=embed)
+    #update_channel = client.get_channel(twitter_update_channel)
+    #await update_channel.send(tlist)
         try:
             user=InstagramUser("alvinalvinalvin437",sessionid=SESSIONID)
             print(len(user.posts))
@@ -127,20 +159,45 @@ async def insta(ctx):
         print(SESSIONID)
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
-    global latest_tweet_id  
+    global latest_tweet_id 
+    Media_present = False
+    Extended_entites_present = False
     new_tweets = api.user_timeline(screen_name="@Paz50982472",count=1, tweet_mode="extended")
+    try:
+        if "extended_entities" in dir(new_tweets[0]):
+            Extended_entites_present = True
+    except:
+        pass
+    try:
+        if "media" in dir(new_tweets[0].entities):
+            Media_present = True
+    except:
+        pass
     for each in new_tweets:
-      latest_tweet = each.full_text
-      if 'media' in each.entities:
-        for image in  each.entities['media']:
-          latest_img = image['media_url']
-
-          embed=discord.Embed(title="Twitter",description=latest_tweet, color=color_var)
-          embed.set_image(url=latest_img)
-          embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
-          latest_tweet_id = each.id
-          await ctx.send(embed=embed)
-    
+        latest_tweet = each.full_text
+        if Extended_entites_present == True or Media_present == True:
+            embed=discord.Embed(title="@Paz50982472",description=latest_tweet, color=color_var)
+            latest_tweet_id = each.id
+            embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
+            try:
+                if len(each.extended_entities['media']) > 1:
+                    await ctx.send(embed=embed)
+                    for image in each.extended_entities['media']:
+                        latest_img = image['media_url']
+                        embed=discord.Embed(color=color_var)
+                        embed.set_image(url=latest_img)
+                        latest_tweet_id = new_tweets[0].id
+                        await ctx.send(embed=embed)
+            except:
+                for image in each.entities['media']:
+                    embed.set_image(url=latest_img)
+                    latest_tweet_id = new_tweets[0].id
+                    await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title="@Paz50982472",description=latest_tweet, color=color_var)
+            embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
+            latest_tweet_id = new_tweets[0].id
+            await ctx.send(embed=embed)
     #update_channel = client.get_channel(twitter_update_channel)
     #await update_channel.send(tlist)
 @client.command()
@@ -157,10 +214,30 @@ async def teval(ctx,*,text):
         await ctx.send(str(e))
 @client.command()
 async def say(ctx, chann:discord.TextChannel,*,say):
-    await chann.send(str(say))        
+    global roles_allowed
+    for i in roles_allowed:
+        if discord.utils.get(ctx.guild.roles, id=i) in ctx.author.roles:
+            await chann.send(str(say))
+            break
+    else:
+        await ctx.send("Access Denied")
+@client.command()
+@commands.has_permissions(manage_messages=True)
+async def role(ctx, mode="", *, role_name=""):
+    global roles_allowed    
+    if mode.lower()=="set":
+        if role_name in [i.name for i in ctx.guild.roles]:
+            the_role=discord.utils.get(ctx.guild.roles, name=role_name).id
+            roles_allowed+=[the_role]
+            await ctx.send(role_name+" can access say command")
+    elif mode.lower()=="remove":
+        the_role=discord.utils.get(ctx.guild.roles, name=role_name).id
+        roles_allowed.remove(the_role)
+        await ctx.send(role_name+" can no longer access say command")
+    else:
+        st=""
+        for i in roles_allowed:
+            st=st+str(discord.utils.get(ctx.guild.roles,id=i).name)+"\n"
+        await ctx.send(embed=discord.Embed(title="Roles allowed", description=st,color=color_var))     
 
 client.run(os.getenv('token'))
-
-
-
-
