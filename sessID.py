@@ -1,12 +1,12 @@
 import requests, hashlib
-file = open("../pass.txt","r")
-txt_from_file = str(file.read())
-start_token = txt_from_file.find("username=") + len("username=")
-end_token = txt_from_file.find('"',start_token + 3) + 1
-username=(eval(txt_from_file[start_token:end_token]))
-start_token = txt_from_file.find("password=") + len("password=")
-end_token = txt_from_file.find('"',start_token + 3) + 1
-password=(eval(txt_from_file[start_token:end_token]))
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+username=str(os.getenv('username'))
+password=str(os.getenv('password'))
 
 def get_sessionid(username, password):
     url = "https://i.instagram.com/api/v1/accounts/login/"
