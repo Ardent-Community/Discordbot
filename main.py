@@ -18,7 +18,8 @@ default_prefix="h!"
 color_var=discord.Color.from_rgb(0, 235, 0)
 prefix={}
 
-global channel, SESSIONID, latest_tweet_id
+global channel, SESSIONID, latest_tweet_id, roles_allowed
+roles_allowed=[]
 latest_tweet_id = 0
 channel=0
 SESSIONID=""
@@ -213,6 +214,30 @@ async def teval(ctx,*,text):
         await ctx.send(str(e))
 @client.command()
 async def say(ctx, chann:discord.TextChannel,*,say):
-    await chann.send(str(say))        
+    global roles_allowed
+    for i in roles_allowed:
+        if discord.utils.get(ctx.guild.roles, id=i) in ctx.author.roles:
+            await chann.send(str(say))
+            break
+    else:
+        await ctx.send("Access Denied")
+@client.command()
+@commands.has_permissions(manage_messages=True)
+async def role(ctx, mode="", *, role_name=""):
+    global roles_allowed    
+    if mode.lower()=="set":
+        if role_name in [i.name for i in ctx.guild.roles]:
+            the_role=discord.utils.get(ctx.guild.roles, name=role_name).id
+            roles_allowed+=[the_role]
+            await ctx.send(role_name+" can access say command")
+    elif mode.lower()=="remove":
+        the_role=discord.utils.get(ctx.guild.roles, name=role_name).id
+        roles_allowed.remove(the_role)
+        await ctx.send(role_name+" can no longer access say command")
+    else:
+        st=""
+        for i in roles_allowed:
+            st=st+str(discord.utils.get(ctx.guild.roles,id=i).name)+"\n"
+        await ctx.send(embed=discord.Embed(title="Roles allowed", description=st,color=color_var))     
 
 client.run(os.getenv('token'))
