@@ -5,25 +5,30 @@ import random
 from instagramy import *
 from instascrape import *
 import os
-import twint
+import tweepy
 import nest_asyncio
+from dotenv import load_dotenv
 from sessID import *
+
+load_dotenv()
+
 nest_asyncio.apply()
 twitter_update_channel = 865429347594403850
 default_prefix="h!"
 color_var=discord.Color.from_rgb(0, 235, 0)
 prefix={}
 
-global channel, SESSIONID
+global channel, SESSIONID, latest_tweet_id
+latest_tweet_id = 0
 channel=0
 SESSIONID=""
 old_posts=[]
 client=commands.Bot(command_prefix=default_prefix)
-if False:
-    consumer_key = ""
-    consumer_secret = ""
-    access_key = ""
-    access_secret = ""
+if True:
+    consumer_key = os.getenv('consumer_key')
+    consumer_secret = os.getenv('consumer_secret')
+    access_key = os.getenv('access_key')
+    access_secret = os.getenv('access_secret')
 
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_key, access_secret)
@@ -58,10 +63,21 @@ async def help_menu(ctx):
     await ctx.send(embed=embed)
 @tasks.loop(minutes=2)
 async def instag():
-    global channel, old_posts, SESSIONID
+    global channel, old_posts, SESSIONID, latest_tweet_id
     print(old_posts)
     print(channel)
+    new_tweets = api.user_timeline(screen_name="@Paz50982472",count=1, tweet_mode="extended")
     if channel!=0:
+        if new_tweets[0].id != latest_tweet_id:
+          embed=discord.Embed(title="Twitter",description=new_tweets[0].full_text,color=color_var)
+          if 'media' in new_tweets[0].entities:
+            for image in  new_tweets[0].entities['media']:
+              latest_img = image['media_url']
+          embed.set_image(url=latest_img)
+          embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
+          latest_tweet_id = new_tweets[0].id
+          cha = client.get_channel(channel)
+          await cha.send(embed=embed)
         try:
             user=InstagramUser("alvinalvinalvin437",sessionid=SESSIONID)
             print(len(user.posts))
@@ -101,7 +117,7 @@ async def insta(ctx):
         pos.scrape(headers=headers)    
         descript=pos.caption
         thumb=user.profile_picture_url
-        embed=discord.Embed(title="Insta",description=descript, color=color_var)
+        embed=discord.Embed(title="Insta",description=descript+"\nLikes: "+str(user.posts[0].likes)+"\nComments: "+str(user.posts[0].likes), color=color_var)
         embed.set_image(url=user.posts[0].post_source)
         embed.set_thumbnail(url=thumb)
         await ctx.send(embed=embed)
@@ -111,17 +127,38 @@ async def insta(ctx):
         print(SESSIONID)
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
+    global latest_tweet_id  
     new_tweets = api.user_timeline(screen_name="@Paz50982472",count=1, tweet_mode="extended")
     for each in new_tweets:
-        latest_tweet = each.text
-    latest_tweet_id = 0
-    for each in new_tweets:
-        if 'media' in each.entities:
-            for image in  each.entities['media']:
-                latest_img = image['media_url']
+      latest_tweet = each.full_text
+      if 'media' in each.entities:
+        for image in  each.entities['media']:
+          latest_img = image['media_url']
+
+          embed=discord.Embed(title="Twitter",description=latest_tweet, color=color_var)
+          embed.set_image(url=latest_img)
+          embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
+          latest_tweet_id = each.id
+          await ctx.send(embed=embed)
+    
     #update_channel = client.get_channel(twitter_update_channel)
     #await update_channel.send(tlist)
-    
+@client.command()
+async def teval(ctx,*,text):
+    user=InstagramUser("alvinalvinalvin437",sessionid=SESSIONID)        
+    url=user.posts[0].post_url
+    pos=Post(url)
+    headers = {
+    "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
+    "cookie": "sessionid="+SESSIONID+";"}
+    try:
+        await ctx.send("```\n"+str(eval(text))+"\n```")
+    except Exception as e:
+        await ctx.send(str(e))
+@client.command()
+async def say(ctx, chann:discord.TextChannel,*,say):
+    await chann.send(str(say))
+        
 file = open("../env.txt","r")
 txt_from_file = str(file.read())
 start_token = txt_from_file.find("token=") + len("token=")
