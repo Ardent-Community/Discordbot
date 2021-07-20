@@ -43,7 +43,6 @@ def instagram_get(account, not_loop=False):
     global SESSIONID, old_posts
     try:
         user=InstagramUser(account,sessionid=SESSIONID)
-        print(len(user.posts))
         url=user.posts[0].post_url
         if (not url in old_posts) or not_loop:                
             cha=client.get_channel(channel)
@@ -155,7 +154,6 @@ async def instag():
         for i_ac in instagram_accounts:
             try:                
                 embed=instagram_get(i_ac)
-                print(embed)
                 if embed!=None:
                     await cha.send(embed=embed)
             except Exception as e:
