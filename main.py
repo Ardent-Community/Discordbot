@@ -46,13 +46,13 @@ def instagram_get(account, not_loop=False):
     try:
         user=InstagramUser(account,sessionid=SESSIONID)
         url=user.posts[0].post_url
-        if (not url in old_posts) or not_loop:                
+        if (not url in old_posts) or not_loop:
             cha=client.get_channel(channel)
             pos=Post(url)
             headers = {
             "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
             "cookie": "sessionid="+SESSIONID+";"}
-            pos.scrape(headers=headers)    
+            pos.scrape(headers=headers)
             descript=pos.caption
             thumb=user.profile_picture_url
             embed=discord.Embed(title="Insta",description=descript, color=color_var)
@@ -61,12 +61,12 @@ def instagram_get(account, not_loop=False):
             if not not_loop:
                 old_posts+=[url]
             return embed
-        
+
     except Exception as e:
         print(e)
         SESSIONID=get_it()
         print(SESSIONID)
-        
+
 @client.event
 async def on_ready():
     print("Ready")
@@ -96,7 +96,7 @@ async def remove_tweet(ctx,*,account):
 async def ping(ctx):
     await ctx.send("Pong\nLatency: "+str(client.latency*1000))
 @client.command(aliases=["hi","hello","hey"])
-async def greetings(ctx):   
+async def greetings(ctx):
     greet_msgs = ["Hi {}!".format(ctx.author.name), "Hey {}!".format(ctx.author.name), "How are you {}?".format(ctx.author.name), "How's it going {}?".format(ctx.author.name)]
     await ctx.send(random.choice(greet_msgs))
 client.remove_command("help")
@@ -110,58 +110,6 @@ async def help_menu(ctx):
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
 
-def twitter_main(twitter_account):
-    global tweet_ids, twitter_accounts
-    embed_list = []
-    new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
-    try:
-        for each in new_tweets:
-            Media_present = False
-            Extended_entites_present = False
-            try:
-                if "extended_entities" in dir(new_tweets[0]):
-                    Extended_entites_present = True
-            except:
-                pass
-            try:
-                if "media" in dir(new_tweets[0].entities):
-                    Media_present = True
-            except:
-                pass                    
-            tweet_ids.append(each.id)
-            latest_tweet = new_tweets[0].full_text
-            status = api.get_status(each.id)
-            created_at = status.created_at
-            time = str(created_at).split(" ")[1]
-            if Extended_entites_present == True or Media_present == True:
-                embed=discord.Embed(title=str(twitter_account),description=latest_tweet, color=color_var)
-                embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
-                embed.set_author(name=twitter_account,icon_url=new_tweets[0].user.profile_image_url)
-                embed.set_footer(text=time)
-                try:
-                    if len(each.extended_entities['media']) > 0:
-                        embed_list.append(embed)
-                        for image in each.extended_entities['media']:
-                            latest_img = image['media_url']
-                            embed=discord.Embed(color=color_var)
-                            embed.set_image(url=latest_img)
-                            embed_list.append(embed)
-                        return embed_list
-                except:
-                    for image in each.entities['media']:
-                        embed.set_image(url=latest_img)
-                        embed_list.append(embed)
-                        return embed_list
-            else:
-                embed=discord.Embed(title=twitter_account,description=latest_tweet, color=color_var)
-                embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
-                embed.set_author(name=twitter_account,icon_url=new_tweets[0].user.profile_image_url)
-                embed.set_footer(text=time)
-                embed_list.append(embed)
-                return embed_list
-    except:
-        pass
-
 @tasks.loop(minutes=1)
 async def instag():
     global channel, old_posts, SESSIONID, tweet_ids, twitter_accounts, instagram_accounts
@@ -173,23 +121,21 @@ async def instag():
             new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
             print(new_tweets[0].id, tweet_ids)
             if new_tweets[0].id not in tweet_ids:
-                embed_list = twitter_main(twitter_account)
-                latest_tweet_id = new_tweets[0].id
-                if len(embed_list) != 0:
-                    for each in embed_list:
-                        await cha.send(embed=each)
+                link = "https://twitter.com/{username}/status/{id}".format(username=twitter_account, id = new_tweets[0].id)
+                ctx.send(link)
+                tweet_ids.append(new_tweets[0].id)
 
     #instagram
         for i_ac in instagram_accounts:
-            try:                
+            try:
                 embed=instagram_get(i_ac)
                 if embed!=None:
                     await cha.send(embed=embed)
             except Exception as e:
                 print(e)
                 await cha.send("This account "+i_ac+" may not exist")
-            
-            
+
+
 @instag.before_loop
 async def wait_for_ready():
     await client.wait_until_ready()
@@ -207,26 +153,28 @@ async def insta(ctx):
 
 @client.command(aliases=["link-tweet"])
 async def link_tweets(ctx, *, accountname):
-    global twitter_accounts
-    new_tweets = api.user_timeline(screen_name=accountname,count=1, tweet_mode="extended", include_rts=False, exclude_replies=True)
+    global twitter_accounts, tweet_ids
+    new_tweets = api.user_timeline(screen_name=accountname,count=1, tweet_mode="extended")
     twitter_accounts.append(accountname)
-    embed_list = twitter_main(accountname)
-    if len(embed_list) != 0:
-        print(len(embed_list))
-        for each in embed_list:
-            await ctx.send(embed=each)
+    for each in new_tweets:
+        link = "https://twitter.com/{username}/status/{id}".format(username=accountname, id = each.id)
+        tweet_ids.append(each.id)
+    ctx.send(link)
+
 
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
-    global twitter_account
+    global twitter_accounts, tweet_ids
     for twitter_account in twitter_accounts:
-        embed_list = twitter_main(twitter_account)
-        for each in embed_list:
-                await ctx.send(embed=each)
+        new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
+        for each in new_tweets:
+            link = "https://twitter.com/{username}/status/{id}".format(username=twitter_account, id = each.id)
+            await ctx.send(link)
+            tweet_ids.append(each.id)
 
 @client.command()
 async def teval(ctx,*,text):
-    user=InstagramUser("alvinalvinalvin437",sessionid=SESSIONID)        
+    user=InstagramUser("alvinalvinalvin437",sessionid=SESSIONID)
     url=user.posts[0].post_url
     pos=Post(url)
     headers = {
@@ -248,7 +196,7 @@ async def say(ctx, chann:discord.TextChannel,*,say):
 @client.command()
 @commands.has_permissions(manage_messages=True)
 async def role(ctx, mode="", *, role_name=""):
-    global roles_allowed    
+    global roles_allowed
     if mode.lower()=="set":
         if role_name in [i.name for i in ctx.guild.roles]:
             the_role=discord.utils.get(ctx.guild.roles, name=role_name).id
@@ -262,6 +210,6 @@ async def role(ctx, mode="", *, role_name=""):
         st=""
         for i in roles_allowed:
             st=st+str(discord.utils.get(ctx.guild.roles,id=i).name)+"\n"
-        await ctx.send(embed=discord.Embed(title="Roles allowed", description=st,color=color_var))     
+        await ctx.send(embed=discord.Embed(title="Roles allowed", description=st,color=color_var))
 
 client.run(os.getenv('token'))
