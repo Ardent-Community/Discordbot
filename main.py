@@ -122,7 +122,7 @@ async def instag():
             print(new_tweets[0].id, tweet_ids)
             if new_tweets[0].id not in tweet_ids:
                 link = "https://twitter.com/{username}/status/{id}".format(username=twitter_account, id = new_tweets[0].id)
-                ctx.send(link)
+                await ctx.send(link)
                 tweet_ids.append(new_tweets[0].id)
 
     #instagram
