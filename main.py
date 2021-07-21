@@ -159,7 +159,7 @@ async def link_tweets(ctx, *, accountname):
     for each in new_tweets:
         link = "https://twitter.com/{username}/status/{id}".format(username=accountname, id = each.id)
         tweet_ids.append(each.id)
-    ctx.send(link)
+    await ctx.send(link)
 
 
 @client.command(aliases=["tweet"])
