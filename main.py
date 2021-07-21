@@ -20,6 +20,7 @@ prefix={}
 
 global channel, SESSIONID, latest_tweet_id, roles_allowed, instagram_accounts, twitter_accounts
 roles_allowed=[]
+
 latest_tweet_id = 0
 channel=0
 SESSIONID=""
@@ -27,7 +28,8 @@ Media_present = False
 Extended_entites_present = False
 old_posts=[]
 instagram_accounts=[]
-
+twitter_accounts = []
+tweet_ids = []
 
 client=commands.Bot(command_prefix=default_prefix)
 
@@ -74,7 +76,7 @@ async def link(ctx,chann:discord.TextChannel):
     global channel
     channel=chann.id
     confirm=client.get_channel(channel)
-    await confirm.send("Channel set for instagram updates")
+    await confirm.send("Channel set for updates")
 @client.command(aliases=['link-insta'])
 async def add_insta(ctx,*, account):
     global instagram_accounts
@@ -85,6 +87,11 @@ async def remove_insta(ctx,*,account):
     global instagram_accounts
     instagram_accounts.remove(account)
     await ctx.send(account+" removed from the list")
+@client.command(aliases=["unlink-tweet"])
+async def remove_tweet(ctx,*,account):
+    global twitter_accounts
+    twitter_accounts.remove(account)
+    await ctx.send(account+ " removed from the list")
 @client.command(aliases=['p'])
 async def ping(ctx):
     await ctx.send("Pong\nLatency: "+str(client.latency*1000))
@@ -103,8 +110,8 @@ async def help_menu(ctx):
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
 
-def twitter_main():
-    global twitter_account, latest_tweet_id
+def twitter_main(twitter_account):
+    global tweet_ids, twitter_accounts
     embed_list = []
     new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
     try:
@@ -121,20 +128,25 @@ def twitter_main():
                     Media_present = True
             except:
                 pass                    
-            latest_tweet_id = each.id
+            tweet_ids.append(each.id)
             latest_tweet = new_tweets[0].full_text
+            status = api.get_status(each.id)
+            created_at = status.created_at
+            time = str(created_at).split(" ")[1]
             if Extended_entites_present == True or Media_present == True:
                 embed=discord.Embed(title=str(twitter_account),description=latest_tweet, color=color_var)
                 embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
+                embed.set_author(name=twitter_account,icon_url=new_tweets[0].user.profile_image_url)
+                embed.set_footer(text=time)
                 try:
-                    if len(each.extended_entities['media']) > 1:
+                    if len(each.extended_entities['media']) > 0:
                         embed_list.append(embed)
                         for image in each.extended_entities['media']:
                             latest_img = image['media_url']
                             embed=discord.Embed(color=color_var)
                             embed.set_image(url=latest_img)
                             embed_list.append(embed)
-                            return embed_list
+                        return embed_list
                 except:
                     for image in each.entities['media']:
                         embed.set_image(url=latest_img)
@@ -143,24 +155,29 @@ def twitter_main():
             else:
                 embed=discord.Embed(title=twitter_account,description=latest_tweet, color=color_var)
                 embed.set_thumbnail(url=new_tweets[0].user.profile_image_url)
+                embed.set_author(name=twitter_account,icon_url=new_tweets[0].user.profile_image_url)
+                embed.set_footer(text=time)
                 embed_list.append(embed)
                 return embed_list
     except:
         pass
+
 @tasks.loop(minutes=1)
 async def instag():
-    global channel, old_posts, SESSIONID, latest_tweet_id, twitter_account, instagram_accounts
+    global channel, old_posts, SESSIONID, tweet_ids, twitter_accounts, instagram_accounts
     print("loop")
     cha = client.get_channel(channel)
     if channel!=0:
     #twitter
-        new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
-        if new_tweets[0].id != latest_tweet_id:
-            embed_list = twitter_main()
-            latest_tweet_id = new_tweets[0].id
-            if len(embed_list) != 0:
-                for each in embed_list:
-                    await cha.send(embed=each)
+        for twitter_account in twitter_accounts:
+            new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
+            print(new_tweets[0].id, tweet_ids)
+            if new_tweets[0].id not in tweet_ids:
+                embed_list = twitter_main(twitter_account)
+                latest_tweet_id = new_tweets[0].id
+                if len(embed_list) != 0:
+                    for each in embed_list:
+                        await cha.send(embed=each)
 
     #instagram
         for i_ac in instagram_accounts:
@@ -189,25 +206,23 @@ async def insta(ctx):
             await ctx.send("The account "+i+" may not exist")
 
 @client.command(aliases=["link-tweet"])
-async def link_tweets(ctx, *, account):
-    global twitter_account, latest_tweet_id
-    try:
-        new_tweets = api.user_timeline(screen_name=account,count=1, tweet_mode="extended")
-        twitter_account = account
-        embed_list = twitter_main()
+async def link_tweets(ctx, *, accountname):
+    global twitter_accounts
+    new_tweets = api.user_timeline(screen_name=accountname,count=1, tweet_mode="extended", include_rts=False, exclude_replies=True)
+    twitter_accounts.append(accountname)
+    embed_list = twitter_main(accountname)
+    if len(embed_list) != 0:
+        print(len(embed_list))
         for each in embed_list:
             await ctx.send(embed=each)
-    except Exception as e:
-        await ctx.send("The account "+account+" may not exist. Please try again later with the correct screen name")
-        await ctx.send(e)
 
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
     global twitter_account
-    new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
-    embed_list = twitter_main()
-    for each in embed_list:
-            await ctx.send(embed=each)
+    for twitter_account in twitter_accounts:
+        embed_list = twitter_main(twitter_account)
+        for each in embed_list:
+                await ctx.send(embed=each)
 
 @client.command()
 async def teval(ctx,*,text):
