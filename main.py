@@ -9,6 +9,7 @@ import tweepy
 import nest_asyncio
 from dotenv import load_dotenv
 from sessID import *
+from wit import Wit
 
 load_dotenv()
 
@@ -32,7 +33,7 @@ twitter_accounts = []
 tweet_ids = []
 
 client=commands.Bot(command_prefix=default_prefix)
-
+wit_client = Wit(os.getenv('wit'))
 consumer_key = os.getenv('consumer_key')
 consumer_secret = os.getenv('consumer_secret')
 access_key = os.getenv('access_key')
@@ -211,5 +212,57 @@ async def role(ctx, mode="", *, role_name=""):
         for i in roles_allowed:
             st=st+str(discord.utils.get(ctx.guild.roles,id=i).name)+"\n"
         await ctx.send(embed=discord.Embed(title="Roles allowed", description=st,color=color_var))
+def ask_embed(title, answer):
+    embed = discord.Embed(title=title, description=answer,color=color_var)
+    embed.set_thumbnail(url="https://media.discordapp.net/attachments/849271520428949517/867430405497421864/logo.png")
+    embed.set_author(name="EconHacks Bangalore", icon_url="https://media.discordapp.net/attachments/849271520428949517/867430405497421864/logo.png")
+    return embed
+
+@client.command(aliases=["ques"])
+async def ask(ctx, *, question):
+    resp = wit_client.message(question)
+    try:
+        intent = resp["intents"][0]["name"]
+        confidence = resp["intents"][0]["confidence"]
+        if confidence > 0.50:
+            if intent == "Contact_organizers":
+                embed = ask_embed("How Do I Contact The Organizers", "You can contact us on our email info@econhacksbangalore.live regarding any complaints, feedbacks and sugestions!")
+                await ctx.send(embed=embed)
+            elif intent == "Need_demo_":
+                embed = ask_embed("Do We Need To Submit A Demo?", "idk. Need to ask Ansh regarding this")
+                await ctx.send(embed=embed)
+            elif intent == "Duration":
+                embed = ask_embed("How Long Is The Hackathon?", "EconHacks is a 48 hour hackathon which starts on 1st October and ends on 3rd October")
+                await ctx.send(embed=embed)
+            elif intent == "How_much_does_it_cost_":
+                embed = ask_embed("How Much Does It Cost?", "Zero. Zip. Zilch. Nada. Nothing. We have been able to bring this hackathon to you free of cost with the help of our amazing sponsors!")
+                await ctx.send(embed=embed)
+            elif intent == "Prizes":
+                embed = ask_embed("Prizes", "There are over $1000 in the prizepool just waiting to be won!")
+                await ctx.send(embed=embed)
+            elif intent == "Register":
+                embed = ask_embed("How Do I Register", "You can register using Devfolio!")
+                await ctx.send(embed=embed)
+            elif intent == "Sponsor":
+                embed = ask_embed("Who Are The Sponsors", "This hackathon has been made possible by amazing sponsors Devfolio, Portis, Polygon, Tezos and Celo")
+                await ctx.send(embed=embed)
+            elif intent == "Team_or_individual":
+                embed = ask_embed("Do We Participate Individually Or In Teams", "You can submit projects in teams of 1-5 peoplegoing solo is cool too! You can bring your friends as a team, or you can find team members at the event on our Discord server.")
+                await ctx.send(embed=embed)
+            elif intent == "Team_size":
+                embed = ask_embed("How Big Can Teams Be", "You can submit projects in teams of 1-5 people. Most teams aim to have a mix of people with both design and developer skills.")
+                await ctx.send(embed=embed)
+            elif intent == "What_can_we_build":
+                embed = ask_embed("Theme Of The Hackathon", "This is an Economy based hackathon. You can build anything which provides an economic value and helps the struggling citizens of our country.")
+                await ctx.send(embed=embed)
+            elif intent == "What_is_a_hackathon":
+                embed = ask_embed("What Is A Hackathon", "A hackathon is best described as an “invention marathon”. Anyone who has an interest in technology attends a hackathon to learn, build & share their creations over the course of a weekend in a relaxed and welcoming atmosphere. You don’t have to be a programmer and you certainly don’t have to be majoring in Computer Science.")
+                await ctx.send(embed=embed)
+            elif intent == "Who_can_take_part":
+                embed = ask_embed("Who Can Take Part", "All high school students are eligible to participate in this awesome hackathon!")
+                await ctx.send(embed=embed)
+    except:
+        await ctx.send("I didn't get that. Need to be retrained.")
+        print(question)
 
 client.run(os.getenv('token'))
