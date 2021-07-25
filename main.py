@@ -14,7 +14,6 @@ from wit import Wit
 load_dotenv()
 
 nest_asyncio.apply()
-twitter_update_channel = 865429347594403850
 default_prefix="h!"
 color_var=discord.Color.from_rgb(0, 235, 0)
 prefix={}
