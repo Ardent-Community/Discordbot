@@ -71,38 +71,52 @@ def instagram_get(account, not_loop=False):
 async def on_ready():
     print("Ready")
     instag.start()
+
 @client.command()
 async def link(ctx,chann:discord.TextChannel):
     global channel
     channel=chann.id
+    await ctx.message.delete()
     confirm=client.get_channel(channel)
     await confirm.send("Channel set for updates")
+
 @client.command(aliases=['link-insta'])
 async def add_insta(ctx,*, account):
     global instagram_accounts
+    await ctx.message.delete()
     instagram_accounts.append(account)
     await ctx.send(account+" added to the list")
+    
 @client.command(aliases=['unlink-insta'])
 async def remove_insta(ctx,*,account):
     global instagram_accounts
+    await ctx.message.delete()
     instagram_accounts.remove(account)
     await ctx.send(account+" removed from the list")
+
 @client.command(aliases=["unlink-tweet"])
 async def remove_tweet(ctx,*,account):
     global twitter_accounts
+    await ctx.message.delete()
     twitter_accounts.remove(account)
     await ctx.send(account+ " removed from the list")
+
 @client.command(aliases=['p'])
 async def ping(ctx):
+    await ctx.message.delete()
     await ctx.send("Pong\nLatency: "+str(client.latency*1000))
+
 @client.command(aliases=["hi","hello","hey"])
 async def greetings(ctx):
+    await ctx.message.delete()
     greet_msgs = ["Hi {}!".format(ctx.author.name), "Hey {}!".format(ctx.author.name), "How are you {}?".format(ctx.author.name), "How's it going {}?".format(ctx.author.name)]
     await ctx.send(random.choice(greet_msgs))
+
 client.remove_command("help")
 @client.command(aliases=["use",'help','info'])
 async def help_menu(ctx):
     embed = discord.Embed(title="Command Menu", color=color_var)
+    await ctx.message.delete()
     embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/858234706305482785/865191551444844544/hackathonlogo.png")
     embed.add_field(name="Social",value="h!insta to get insta feed\nh!tweet to get twitter feed")
     embed.add_field(name="Events", value="h!hdt to get hackathon dates")
@@ -143,6 +157,7 @@ async def wait_for_ready():
 @client.command()
 async def insta(ctx):
     global instagram_accounts
+    await ctx.message.delete()
     for i in instagram_accounts:
         try:
             embed=instagram_get(i,True)
@@ -156,6 +171,7 @@ async def link_tweets(ctx, *, accountname):
     global twitter_accounts, tweet_ids
     new_tweets = api.user_timeline(screen_name=accountname,count=1, tweet_mode="extended")
     twitter_accounts.append(accountname)
+    await ctx.message.delete()
     for each in new_tweets:
         link = "https://twitter.com/{username}/status/{id}".format(username=accountname, id = each.id)
         tweet_ids.append(each.id)
@@ -165,6 +181,7 @@ async def link_tweets(ctx, *, accountname):
 @client.command(aliases=["tweet"])
 async def fetch_tweets(ctx):
     global twitter_accounts, tweet_ids
+    await ctx.message.delete()
     for twitter_account in twitter_accounts:
         new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
         for each in new_tweets:
@@ -175,6 +192,7 @@ async def fetch_tweets(ctx):
 @client.command()
 async def teval(ctx,*,text):
     user=InstagramUser("alvinalvinalvin437",sessionid=SESSIONID)
+    await ctx.message.delete()
     url=user.posts[0].post_url
     pos=Post(url)
     headers = {
@@ -184,19 +202,23 @@ async def teval(ctx,*,text):
         await ctx.send("```\n"+str(eval(text))+"\n```")
     except Exception as e:
         await ctx.send(str(e))
+
 @client.command()
 async def say(ctx, chann:discord.TextChannel,*,say):
     global roles_allowed
+    await ctx.message.delete()
     for i in roles_allowed:
         if discord.utils.get(ctx.guild.roles, id=i) in ctx.author.roles:
             await chann.send(str(say))
             break
     else:
         await ctx.send("Access Denied")
+        
 @client.command()
 @commands.has_permissions(manage_messages=True)
 async def role(ctx, mode="", *, role_name=""):
     global roles_allowed
+    await ctx.message.delete()
     if mode.lower()=="set":
         if role_name in [i.name for i in ctx.guild.roles]:
             the_role=discord.utils.get(ctx.guild.roles, name=role_name).id
@@ -220,6 +242,7 @@ def ask_embed(title, answer):
 @client.command(aliases=["ques"])
 async def ask(ctx, *, question):
     resp = wit_client.message(question)
+    await ctx.message.delete()
     try:
         intent = resp["intents"][0]["name"]
         confidence = resp["intents"][0]["confidence"]
