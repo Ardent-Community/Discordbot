@@ -23,7 +23,7 @@ roles_allowed=[]
 
 latest_tweet_id = 0
 channel=0
-SESSIONID=""
+SESSIONID=get_it()
 Media_present = False
 Extended_entites_present = False
 old_posts=[]
@@ -84,6 +84,7 @@ async def link(ctx,chann:discord.TextChannel):
 async def add_insta(ctx,*, account):
     global instagram_accounts
     await ctx.message.delete()
+    await ctx.send(embed=instagram_get(account,True))
     instagram_accounts.append(account)
     await ctx.send(account+" added to the list")
     
@@ -133,7 +134,6 @@ async def instag():
     #twitter
         for twitter_account in twitter_accounts:
             new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
-            print(new_tweets[0].id, tweet_ids)
             if new_tweets[0].id not in tweet_ids:
                 link = "https://twitter.com/{username}/status/{id}".format(username=twitter_account, id = new_tweets[0].id)
                 await ctx.send(link)
