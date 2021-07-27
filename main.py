@@ -15,7 +15,7 @@ load_dotenv()
 
 nest_asyncio.apply()
 default_prefix="h!"
-color_var=discord.Color.from_rgb(0, 235, 0)
+color_var=discord.Color(value=4246176)
 prefix={}
 
 global channel, SESSIONID, latest_tweet_id, roles_allowed, instagram_accounts, twitter_accounts
@@ -208,7 +208,7 @@ async def say(ctx, chann:discord.TextChannel,*,say):
     global roles_allowed
     await ctx.message.delete()
     for i in roles_allowed:
-        if discord.utils.get(ctx.guchromeild.roles, id=i) in ctx.author.roles:
+        if discord.utils.get(ctx.guild.roles, id=i) in ctx.author.roles:
             await chann.send(str(say))
             break
     else:
