@@ -5,6 +5,7 @@ import random
 from instagramy import *
 from instascrape import *
 import os
+from prsaw import RandomStuff
 import tweepy
 import nest_asyncio
 from dotenv import load_dotenv
@@ -15,6 +16,7 @@ import emoji
 from replit import db
 load_dotenv()
 
+CBAPI= os.getenv("cbapi")
 nest_asyncio.apply()
 default_prefix="h!"
 color_var=discord.Color(value=4246176)
@@ -25,7 +27,7 @@ roles_allowed=[]
 
 latest_tweet_id = 0
 channel=0
-SESSIONID=""
+SESSIONID="48422447086%3AA755vAGRveJn5j%3A14"
 Media_present = False
 Extended_entites_present = False
 old_posts=[]
@@ -33,7 +35,9 @@ instagram_accounts=[]
 twitter_accounts = []
 tweet_ids = []
 
-client=commands.Bot(command_prefix=default_prefix)
+intents=discord.Intents.default()
+intents.members=True
+client=commands.Bot(command_prefix=default_prefix, case_insensitive=True,intents=intents)
 wit_client = Wit(os.getenv('wit'))
 consumer_key = os.getenv('consumer_key')
 consumer_secret = os.getenv('consumer_secret')
@@ -44,32 +48,35 @@ auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_key, access_secret)
 api = tweepy.API(auth)
 
-twitter_accounts = db["twitter_accounts"]
+twitter_accounts = list(db["twitter_accounts"])
+instagram_accounts=list(db["instagram_accounts"])
+
 def instagram_get(account, not_loop=False):
     global SESSIONID, old_posts
-    try:
-        user=InstagramUser(account,sessionid=SESSIONID)
-        url=user.posts[0].post_url
-        if (not url in old_posts) or not_loop:
-            cha=client.get_channel(channel)
-            pos=Post(url)
-            headers = {
-            "user-agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Mobile Safari/537.36 Edg/87.0.664.57",
-            "cookie": "sessionid="+SESSIONID+";"}
-            pos.scrape(headers=headers)
-            descript=pos.caption
-            thumb=user.profile_picture_url
-            embed=discord.Embed(title="Insta",description=descript, color=color_var)
-            embed.set_image(url=user.posts[0].post_source)
-            embed.set_thumbnail(url=thumb)
-            if not not_loop:
-                old_posts+=[url]
-            return embed
+    if type(SESSIONID)==type("hi"):      
+      try:
+          
+          user=InstagramUser(account,sessionid=SESSIONID)
+          url=user.posts[0].post_url
+          if (not url in old_posts) or not_loop:
+              pos=Post(url)
+              headers = {
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.115 Safari/537.36",
+              "cookie": "sessionid="+SESSIONID+";"}
+              pos.scrape(headers=headers)
+              descript=pos.caption
+              thumb=user.profile_picture_url
+              embed=discord.Embed(title="Insta",description=descript, color=color_var)
+              embed.set_image(url=user.posts[0].post_source)
+              embed.set_thumbnail(url=thumb)
+              if not not_loop:
+                  old_posts+=[url]
+              return embed
 
-    except Exception as e:
-        print(e)
-        SESSIONID=get_it()
-        print(SESSIONID)
+      except Exception as e:
+          print(e)
+          SESSIONID=get_it()
+          print(SESSIONID)
 
 @client.event
 async def on_ready():
@@ -80,6 +87,36 @@ async def on_ready():
     await mess.add_reaction(emoji.emojize(":cross_mark:"))
     await mess.add_reaction(emoji.emojize(":repeat_button:"))
     instag.start()
+
+@client.event
+async def on_member_join(member):  
+  print(str(member)+ "joined")
+  try:
+    description="""
+I'm Econbot (I'm only a computer program), created to help you during your stay in our server!
+
+Before I proceed any further, please make sure to review over the following things (they're very important):
+
+> **1.** Make sure you've registered on Devfolio (if not, go to [this link](https://econhacks-bangalore.devfolio.co/) or type **h!devfolio** and I'll send over a link!)
+> **2.** Make sure you've read through the <#853856408512626688> and <#853858318242414603> channels. 
+
+Once you're done the above, here are some reminders of how to proceed in the server:
+
+>  - Verify yourself in <#853865432284266496> and introduce yourself in <#853876912640491530>
+>  - Pick up roles in <#853858289242210355>
+>  - If you are looking for a team, mention your idea or what kind of people are you looking to collaborate with in the <#872705249964613702> channel (make sure you have the "Need a team" role from <#853858289242210355>)
+>  - Ask your queries in <#872766197022728232> and an Organizer or Volunteer will get to it ASAP.
+>  - Chat in <#867636783173074995> with people in the hackathon.
+
+
+For a list of commands that I can respond to, type in **h!help** in a bot channel or a DM!
+    """
+    embed=discord.Embed(title="Welcome to EconHacks Bangalore Discord Server", description=description,color=color_var)
+    embed.set_thumbnail(url=client.user.avatar_url_as(format="png"))
+    await member.send(embed=embed)
+  except:
+    channel=client.get_channel(870668217494953984)
+    await channel.send(embed=discord.Embed(description="Couldnt sent the message to "+str(member),color=color_var))
 
 @client.event
 async def on_reaction_add(reaction, user):  
@@ -98,16 +135,28 @@ async def link(ctx,chann:discord.TextChannel):
     await ctx.message.delete()
     confirm=client.get_channel(channel)
     await confirm.send("Channel set for updates")
-
+@client.command(aliases=['devfolio'])
+async def devfo(ctx):
+  await ctx.send("You can register at https://econhacks-bangalore.devfolio.co/")
 @client.command(aliases=['link-insta'])
 async def add_insta(ctx,*, account):
     global instagram_accounts
     await ctx.message.delete()
-    await ctx.send(embed=instagram_get(account,True))
-    instagram_accounts.append(account)
-    db["instagram_accounts"] = instagram_accounts
-    await ctx.send(account+" added to the list")
-    
+    embed=instagram_get(account,True)
+    if embed!=None:
+      await ctx.send(embed=embed)
+      instagram_accounts.append(account)
+      db["instagram_accounts"] = instagram_accounts
+      await ctx.send(embed=discord.Embed(description=account+" added to the list",color=color_var))
+    else:
+      await ctx.send(embed=discord.Embed(description="This account may not exist or it may be private, please check the spelling.\nAlso check for issues with instagram",color=color_var))
+@client.command(aliases=['sess'])
+async def set_sessionid(ctx):
+  global SESSIONID
+  SESSIONID=get_it()
+  channel=client.get_channel(870668217494953984)
+  await channel.send(embed=discord.Embed(description=str(SESSIONID),color=color_var))
+
 @client.command(aliases=['unlink-insta'])
 async def remove_insta(ctx,*,account):
     global instagram_accounts
@@ -138,14 +187,14 @@ client.remove_command("help")
 @client.command(aliases=["use",'help','info'])
 async def help_menu(ctx):
     embed = discord.Embed(title="Command Menu", color=color_var)
-    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/858234706305482785/865191551444844544/hackathonlogo.png")
+    embed.set_thumbnail(url=client.user.avatar_url_as(format="png"))
     embed.add_field(name="Social",value="h!insta to get insta feed\nh!tweet to get twitter feed")
     embed.add_field(name="Events", value="h!hdt to get hackathon dates")
-    embed.add_field(name="Questions", value="h!FAQ to drop your questions and our team will answer")
+    embed.add_field(name="Questions", value="h!ques to drop your questions and our team will answer")
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
 
-@tasks.loop(minutes=1)
+@tasks.loop(minutes=4)
 async def instag():
     global channel, old_posts, SESSIONID, tweet_ids, twitter_accounts, instagram_accounts
     print("loop")
@@ -156,7 +205,7 @@ async def instag():
             new_tweets = api.user_timeline(screen_name=twitter_account,count=1, tweet_mode="extended")
             if new_tweets[0].id not in tweet_ids:
                 link = "https://twitter.com/{username}/status/{id}".format(username=twitter_account, id = new_tweets[0].id)
-                await ctx.send(link)
+                await cha.send(link)
                 tweet_ids.append(new_tweets[0].id)
 
     #instagram
@@ -220,6 +269,7 @@ async def fetch_tweets(ctx):
 
 @client.command()
 async def teval(ctx,*,text):
+  if ctx.guild.id==858234706305482782:
     try:
         await ctx.send("```\n"+str(eval(text))+"\n```")
     except Exception as e:
@@ -257,17 +307,17 @@ async def role(ctx, mode="", *, role_name=""):
         
 def ask_embed(title, answer):
     embed = discord.Embed(title=title, description=answer,color=color_var)
-    embed.set_thumbnail(url="https://media.discordapp.net/attachments/849271520428949517/867430405497421864/logo.png")
+    embed.set_thumbnail(url=client.user.avatar_url_as(format="png"))
     embed.set_author(name="EconHacks Bangalore", icon_url="https://media.discordapp.net/attachments/849271520428949517/867430405497421864/logo.png")
     return embed
 
-@client.command(aliases=["ques"])
-async def ask(ctx, *, question):
+@client.command(aliases=["q"])
+async def ques(ctx, *, question):
     resp = wit_client.message(question)
     try:
         intent = resp["intents"][0]["name"]
         confidence = resp["intents"][0]["confidence"]
-        if confidence > 0.50:
+        if confidence > 0.90:
             if intent == "Contact_organizers":
                 embed = ask_embed("How Do I Contact The Organizers", "You can contact us on our email info@econhacksbangalore.live regarding any complaints, feedbacks and sugestions!")
                 await ctx.send(embed=embed)
@@ -281,19 +331,19 @@ async def ask(ctx, *, question):
                 embed = ask_embed("How Much Does It Cost?", "Zero. Zip. Zilch. Nada. Nothing. We have been able to bring this hackathon to you free of cost with the help of our amazing sponsors!")
                 await ctx.send(embed=embed)
             elif intent == "Prizes":
-                embed = ask_embed("Prizes", "There are over $1000 in the prizepool just waiting to be won!")
+                embed = ask_embed("Prizes", "There is over 30 lakhs in the prizepool just waiting to be won bu talented people like you!")
                 await ctx.send(embed=embed)
             elif intent == "Register":
-                embed = ask_embed("How Do I Register", "You can register using Devfolio!")
+                embed = ask_embed("How Do I Register", "You can register on Devfolio using this link -  https://econhacks-bangalore.devfolio.co/")
                 await ctx.send(embed=embed)
             elif intent == "Sponsor":
-                embed = ask_embed("Who Are The Sponsors", "This hackathon has been made possible by amazing sponsors Devfolio, Portis, Polygon, Tezos and Celo")
+                embed = ask_embed("Who Are The Sponsors", "This hackathon has been made possible by amazing sponsors Qoom, Devfolio, Slingshot, EchoAR, Gather,  Replit, Portis, Polygon, Tezos, Celo and Balsmiq")
                 await ctx.send(embed=embed)
             elif intent == "Team_or_individual":
                 embed = ask_embed("Do We Participate Individually Or In Teams", "You can submit projects in teams of 1-5 peoplegoing solo is cool too! You can bring your friends as a team, or you can find team members at the event on our Discord server.")
                 await ctx.send(embed=embed)
             elif intent == "Team_size":
-                embed = ask_embed("How Big Can Teams Be", "You can submit projects in teams of 1-5 people. Most teams aim to have a mix of people with both design and developer skills.")
+                embed = ask_embed("Size of teams", "You can submit projects in teams of 1-5 people. Most teams aim to have a mix of people with both design and developer skills.")
                 await ctx.send(embed=embed)
             elif intent == "What_can_we_build":
                 embed = ask_embed("Theme Of The Hackathon", "This is an Economy based hackathon. You can build anything which provides an economic value and helps the struggling citizens of our country.")
@@ -302,10 +352,93 @@ async def ask(ctx, *, question):
                 embed = ask_embed("What Is A Hackathon", "A hackathon is best described as an “invention marathon”. Anyone who has an interest in technology attends a hackathon to learn, build & share their creations over the course of a weekend in a relaxed and welcoming atmosphere. You don’t have to be a programmer and you certainly don’t have to be majoring in Computer Science.")
                 await ctx.send(embed=embed)
             elif intent == "Who_can_take_part":
-                embed = ask_embed("Who Can Take Part", "All high school students are eligible to participate in this awesome hackathon!")
+                embed = ask_embed("Who Can Take Part", "All high and middle school students are eligible to participate in this awesome hackathon!")
                 await ctx.send(embed=embed)
-    except:
-        await ctx.send("I didn't get that. Need to be retrained.")
-        print(question)
+            elif intent == "Does_it_have_to_be_a_new_project":
+              embed = ask_embed("Can we work on it before the hackathon starts", "No, the projects have to be developed during the timeframe and previous worked on projects cannot be submitted.")
+              await ctx.send(embed=embed)
+            elif intent == "How_to_make_a_team":
+              embed = ask_embed("How to create or join a team?", "You can DM others looking for a team on Discord or you can invite your friends to join you!")
+              await ctx.send(embed=embed)
+            elif intent == "How_to_use_discord":
+              embed = ask_embed("How does does discord work", "If you're new to discord, no worries! Check out Wikihow's article (https://www.wikihow.com/Get-Started-with-Discord) and Discord's article (https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord) and you'll be pretty much set! If you have any more queries, you can ask your fellow server-mates or moderators by making a ticket for guidance.")
+              await ctx.send(embed=embed)
+            elif intent == "Speakers":
+              embed = ask_embed("Workshops", "Gain insights and knowledge from guest speaker series! Our guest speakers have many years of experience in their field of expertise.")
+              await ctx.send(embed=embed)
+            elif intent == "Speakers":
+              embed = ask_embed("Workshops", "Gain insights and knowledge from guest speaker series! Our guest speakers have many years of experience in their field of expertise.")
+              await ctx.send(embed=embed)
+            elif intent == "What_are_the_rules":
+              embed = ask_embed("Rules", """1. Follow Discord's Terms of Service & Community Guidelines at all times.
+              Discord ToS  https://discord.com/terms
+              Guidelines https://discord.com/guidelines 
+              -  Also note that we follow MLH's code of conduct, listed here https://static.mlh.io/docs/mlh-code-of-conduct.pdf
+
+              2. Be mature
+              -  Be nice to everyone.
+              -  Ping a mod with reason listed in same message if someone appears to be breaking a rule.
+              -  Do not cause unnecessary annoyance to anyone.
+              -  Don't use any form of derogatory slang/terms / overly offensive language (Direct ban if done on purpose.)
+              -  No misusing of exploits or intentional permissions give to you for your convenience. They can be taken from you.
+
+              3. No Advertising
+              Do not post or link your socials unless explicitly allowed by a mod except for in the #connect channel. Also, note that the channel cannot have discord server links.
+              DMing our users without warning is also against the rules and gets a mute or a ban. 
+
+              4. NO NSFW MATERIAL.
+              This includes any form of media deemed to be sexual, gore, or abusive to any lifeform. This rule will get you a direct ban even if you are a regular person on the server.
+
+              5. Don't tag staff for meaningless reasons
+              When pinging the moderators (@moderators), make sure that
+                -  No staff members are in chat.
+                - It requires immediate attention (Raid, Spam, etc... ).
+                - Your messages contains the reasoning for the ping,
+              (If you would like to report a user, but it isn't of immediate urgency, please do 
+              ?report @user reason here.) 
+
+              6. If any rules are broken by you here, expect a punishment whose severity is decided by the mods. Rules 1 and 4 get direct bans, while others may get specific perms removed entirely, or a temporary mute.
+
+              7. If there aren't any rules listed here that tell to explicitly  not do something, it does not mean it is allowed. Use common sense, ask before doing or make a ticket and ask if it is still unclear.
+""")
+              await ctx.send(embed=embed)
+            elif intent == "What_is_Econbot":
+              embed = ask_embed("Who am I?", "I'm Econbot, created to help you during your stay in our server! I was made by the wonderfull team of voluteers at econhacks in the Python language.")
+              await ctx.send(embed=embed)
+            elif intent == "Where_is_the_hackathon_taking_place":
+              embed = ask_embed("On which platforms will the hackathon take place?", "The hacakthon will take place over Discord and Gather")
+              await ctx.send(embed=embed)
+            elif intent == "Who_are_the_organizers":
+              embed = ask_embed("Organizers", "This hackathon was organized by 7 passionate high school students who wanted to help solve the economic crisis caused by the pandemic.")
+              await ctx.send(embed=embed)
+            elif intent == "Who_are_the_organizers":
+              embed = ask_embed("Organizers", "This hackathon was organized by 7 passionate high school students who wanted to help solve the economic crisis caused by the pandemic.")
+              await ctx.send(embed=embed)
+            elif intent == "Who_made_you":
+              embed = ask_embed("Organizers", "I was made by the wonderfull team of voluteers at econhacks in the Python language")
+              await ctx.send(embed=embed)
+            elif intent == "Why_I_exist":
+              embed = ask_embed("Meaning of life", "To help make the world a wonderfull place! and to participate in EconHacks Bangalore :joy:")
+              await ctx.send(embed=embed)
+            elif intent == "website_of_the_hackathon":
+              embed = ask_embed("Official website", "Please visit https://econhacksbangalore.live/ for more info.")
+              await ctx.send(embed=embed)
+            elif intent == "who_are_the_mentors":
+              embed = ask_embed("Mentors", "We have two mentors to date. Will update later.")
+              await ctx.send(embed=embed)
+        else:
+        #   question= message.content.replace('h!ques ', '')
+            rs = RandomStuff(async_mode=True,api_key=CBAPI)
+            res = await rs.get_ai_response(question)
+            await ctx.send(res[0]["message"])
+
+            
+    except Exception as e:
+        print(e)
+        rs = RandomStuff(async_mode=True,api_key=CBAPI)
+        res = await rs.get_ai_response(question)
+        await ctx.send(res[0]["message"])
+        # await ctx.send(embed=discord.Embed(description="Oops. Sorry, I didn't get that. Could you please ask the question in the <#872766197022728232> channel and our organizers or volunteers will get back to you as soon as possible.",color=color_var))
+        # print(question)
 
 client.run(os.getenv('token'))
