@@ -28,3 +28,4 @@ wit==6.0.0
 yarl==1.6.3
 emoji==1.4.2
 replit==3.2.4
+prsaw==0.4.0

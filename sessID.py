@@ -15,7 +15,7 @@ def get_sessionid(username, password):
         m = hashlib.md5()
         m.update(username.encode() + password.encode())
 
-        seed = m.hexdigest()
+        seed = m.hexdigest()  
         volatile_seed = "12345"
 
         m = hashlib.md5()
@@ -34,7 +34,8 @@ def get_sessionid(username, password):
         'Accept': '*/*',
         'Content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Accept-Language': 'en-US',
-        'User-Agent': "Instagram 10.26.0 Android"
+        'User-Agent': "Instagram 10.26.0 Android",
+        'referer' : "https://www.instagram.com/accounts/login/"
     }
 
     response = requests.post(url, headers=headers, data=payload)
