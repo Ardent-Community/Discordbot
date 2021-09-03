@@ -1,3 +1,4 @@
 .env
 .instagramy_cache/
 __pycache__/
+level.json
