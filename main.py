@@ -1,5 +1,8 @@
 import discord
 from discord.ext import commands, tasks
+from discord_components import *           #pip install discord-components
+from discord.ext.commands import bot
+from discord.utils import get
 import json
 import random
 from instagramy import *
@@ -81,6 +84,7 @@ def instagram_get(account, not_loop=False):
 @client.event
 async def on_ready():
     print("Ready")
+    DiscordComponents(client)         #for discord buttons
     channel=client.get_channel(870668217494953984)
     await channel.purge(limit=10000000000000000000)
     mess=await channel.send(embed=discord.Embed(description="Click the reaction X to stop the bot and repeat for reseting the db",color=color_var))
@@ -191,6 +195,7 @@ async def help_menu(ctx):
     embed.add_field(name="Social",value="h!insta to get insta feed\nh!tweet to get twitter feed")
     embed.add_field(name="Events", value="h!hdt to get hackathon dates")
     embed.add_field(name="Questions", value="h!ques to drop your questions and our team will answer")
+    embed.add_field(name="Quiz", value="h!quiz to play quiz and gain some points")
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
 
@@ -440,5 +445,72 @@ async def ques(ctx, *, question):
         await ctx.send(res[0]["message"])
         # await ctx.send(embed=discord.Embed(description="Oops. Sorry, I didn't get that. Could you please ask the question in the <#872766197022728232> channel and our organizers or volunteers will get back to you as soon as possible.",color=color_var))
         # print(question)
+
+#===============LEVEL================
+@client.command()
+async def levels(ctx):
+    with open('level.json') as f:
+        users=json.load(f)
+        values = list(users.values())
+    new_dict = {}
+    for k, v in users.items():
+        new_dict.setdefault(v, []).append(k)
+    values=list(new_dict.values())
+    k=0
+    top_users=['```POINTS   PLAYERS```']
+    for i in values:
+        for j in i:
+            k+=1
+            if k >5:         #for top 5 users
+                break
+            top_users.append(f"```{users[j]}       {client.get_user(int(j))}```")
+    e1 = discord.Embed(title=" Leaderboard ", description='\n'.join(top_users),color=0x00FF00)
+    await ctx.send(embed=e1)
+    await ctx.reply(f"```Your points : {users[str(ctx.author.id)]}```")
+
+#===========NEW USER FOR GAME==========
+def see(users):
+    with open('level.json','w') as fin:
+        json.dump(users,fin) 
+
+#================QUIZ==================
+@client.command()
+async def quiz(ctx):
+  e1 = discord.Embed(title=f"{ctx.author.name} , You Guessed It Right!", description="> You have scored! <",color=0x00FF00)
+  e2 = discord.Embed(title=f"{ctx.author.name} , You Lost!", description=f"> Try again <",color=discord.Color.red())
+  e3 = discord.Embed(title=f"{ctx.author.name}, You didn't Click on Time", description="> Timed Out! <",color=discord.Color.red())
+
+  url='https://opentdb.com/api.php?amount=1&category=18&difficulty=easy&type=multiple'
+  response=requests.get(url)
+  json_data=json.loads(response.text)
+  question=(list(json_data.values())[1][0]["question"])
+  p=(list(json_data.values())[1][0]["correct_answer"])
+  t=(list(json_data.values())[1][0]["incorrect_answers"])
+  t.append(p)
+  random.shuffle(t)
+
+  def check(res):
+      return ctx.author == res.user and res.channel == ctx.channel
+
+  e = discord.Embed(title=f"{ctx.author.name}'s QUIZ Game!", description=f"**Q) {question}**",color=0x3498db)
+  m = await ctx.reply(embed=e,components=[[Button(style=1, label=f"{t[0]}"),Button(style=3, label=f"{t[1]}"),Button(style=ButtonStyle.red,label=f"{t[2]}"),Button(style=ButtonStyle.grey,label=f"{t[3]}")]],)
+  try:
+    res = await client.wait_for("button_click", check=check, timeout=20)
+  except asyncio.TimeoutError:
+    await m.edit(embed=e3,components=[],)
+    return
+
+  if res.component.label==p:
+    with open('level.json') as f:
+            users=json.load(f)
+            if str(ctx.author.id) not in users:
+                users[str(ctx.author.id)]=1
+            if str(ctx.author.id) in users:
+                users[str(ctx.author.id)]+=3
+                e1.set_footer(text="Your gained 3 points", icon_url=ctx.author.avatar_url)
+                await m.edit(embed=e1,components=[],)
+            see(users)
+  else:
+    await m.edit(embed=e2,components=[],)
 
 client.run(os.getenv('token'))
