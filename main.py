@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from discord_components import *           #pip install discord-components
+import asyncio
 from discord.ext.commands import bot
 from discord.utils import get
 import json
@@ -476,7 +477,7 @@ def see(users):
 #================GAMES=================
 @client.command()
 async def games(ctx):
-  Game=['**!bonk\n**:> play Whac-A-Mole\n !bonk @member\n !bonk @member @member #for 3 players\n','**!rps\n**:> play Rock Paper Scissors (2 points)\n','**!guess\n**:> Can you guess which colour is it ?(1 point)\n','**!amongus\n**:> shhhhhhhhh!(1 point)\n','**!football\n**:> Wanna goal ?(2 points)\n','**!quiz\n**:> Answer Answer Answer whooo...(3 points)\n']
+  Game=['**h!bonk\n**:> play Whac-A-Mole\n !bonk @member\n h!bonk @member @member #for 3 players\n','**h!rps\n**:> play Rock Paper Scissors (2 points)\n','**h!guess\n**:> Can you guess which colour is it ?(1 point)\n','**h!amongus\n**:> shhhhhhhhh!(1 point)\n','**h!football\n**:> Wanna goal ?(2 points)\n','**h!quiz\n**:> Answer Answer Answer whooo...(3 points)\n']
   game=discord.Embed(title='Games', description =''.join(Game),color=0x3498db)
   await ctx.send(embed=game)
   with open('level.json') as f:
@@ -653,8 +654,9 @@ async def bonk(ctx, member : discord.Member=None, member1 : discord.Member=None)
           points[member1] += 1
           await ctx.send(f"{member1.name} has bonk the mole! They have **{points[member1]}** point(s)!")
 
-      except:
+      except Exception as e:
         game = False
+        print(e)
         embed = discord.Embed(
           title = "Game Over",
           description = "No one bonk 🔨 the mole in time so the game is over. Final Scores Below.")
