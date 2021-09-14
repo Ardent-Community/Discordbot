@@ -6,6 +6,9 @@ from discord.ext.commands import bot
 from discord.utils import get
 import json
 import random
+import cv2
+import requests
+import numpy as np
 from instagramy import *
 from instascrape import *
 import os
@@ -800,5 +803,61 @@ async def quiz(ctx):
             see(users)
   else:
     await m.edit(embed=e2,components=[],)
+@bot.command()
+async def econify(ctx, member:discord.Member=None):
+    if member is None:
+        a=str(ctx.author.avatar_url_as(format="jpg"))
+        a=a.strip('?size=1024')
+        print(a)
+        
+        req = requests.get(a).content
+        
 
+        arr = np.asarray(bytearray(req), dtype=np.uint8)
+
+
+        img = cv2.imdecode(arr, -1)
+        
+        canny = canny_img(img)
+        cv2.imwrite('canny.jpg', canny)
+        img = cv2.imread('canny.jpg')
+        b, g, r = cv2.split(img) 
+        blank = np.zeros(img.shape[:2], dtype='uint8')
+
+        green = cv2.merge([blank,g,blank])
+        green = cv2.cvtColor(green, cv2.COLOR_BGR2RGB)
+        a=cv2.imwrite('green.jpg', green)
+        
+        file=discord.File("green.jpg")
+        
+        embed = discord.Embed(title="Profile Picture : {}".format(ctx.author.name), color=color)
+        embed.set_image(url="attachment://green.jpg")
+        
+    else:
+        a=str(member.avatar_url)
+        req = requests.get(a).content
+        
+
+        arr = np.asarray(bytearray(req), dtype=np.uint8)
+
+
+        img = cv2.imdecode(arr, -1)
+
+
+        canny = canny_img(img)
+        cv2.imwrite('canny.jpg', canny)
+        img = cv2.imread('canny.jpg')
+        b, g, r = cv2.split(img) 
+        blank = np.zeros(img.shape[:2], dtype='uint8')
+
+        green = cv2.merge([blank,g,blank])
+        
+        green = cv2.cvtColor(green, cv2.COLOR_BGR2RGB)
+        a=cv2.imwrite('green.jpg', green)
+        file=discord.File("green.jpg")
+        
+        embed = discord.Embed(title="Profile Picture : {}".format(member.name), color=color)
+        embed.set_image(url='attachment://green.jpg')
+        
+    await ctx.send(file=file, embed=embed)
 client.run(os.getenv('token'))
