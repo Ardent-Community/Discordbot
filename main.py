@@ -803,7 +803,7 @@ async def quiz(ctx):
             see(users)
   else:
     await m.edit(embed=e2,components=[],)
-@bot.command()
+@client.command()
 async def econify(ctx, member:discord.Member=None):
     if member is None:
         a=str(ctx.author.avatar_url_as(format="jpg"))
