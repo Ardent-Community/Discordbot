@@ -803,6 +803,34 @@ async def quiz(ctx):
             see(users)
   else:
     await m.edit(embed=e2,components=[],)
+
+def canny_img(photo):
+    canny = cv2.Canny(photo, 125, 175)
+    return canny
+
+
+def econify_by_url(image_url:str):
+    req = requests.get(image_url).content
+        
+
+    arr = np.asarray(bytearray(req), dtype=np.uint8)
+
+
+    img = cv2.imdecode(arr, -1)
+    
+    canny = canny_img(img)
+    cv2.imwrite('canny.jpg', canny)
+    img = cv2.imread('canny.jpg')
+    b, g, r = cv2.split(img) 
+    blank = np.zeros(img.shape[:2], dtype='uint8')
+
+    green = cv2.merge([blank,g,blank])
+    green = cv2.cvtColor(green, cv2.COLOR_BGR2RGB)
+    a=cv2.imwrite('green.jpg', green)
+    
+    return discord.File("green.jpg")
+    
+
 @client.command()
 async def econify(ctx, member:discord.Member=None):
     if member is None:
@@ -810,53 +838,18 @@ async def econify(ctx, member:discord.Member=None):
         a=a.strip('?size=1024')
         print(a)
         
-        req = requests.get(a).content
+        file = econify_by_url(a)
         
-
-        arr = np.asarray(bytearray(req), dtype=np.uint8)
-
-
-        img = cv2.imdecode(arr, -1)
-        
-        canny = canny_img(img)
-        cv2.imwrite('canny.jpg', canny)
-        img = cv2.imread('canny.jpg')
-        b, g, r = cv2.split(img) 
-        blank = np.zeros(img.shape[:2], dtype='uint8')
-
-        green = cv2.merge([blank,g,blank])
-        green = cv2.cvtColor(green, cv2.COLOR_BGR2RGB)
-        a=cv2.imwrite('green.jpg', green)
-        
-        file=discord.File("green.jpg")
-        
-        embed = discord.Embed(title="Profile Picture : {}".format(ctx.author.name), color=color)
+        embed = discord.Embed(title=f"Profile Picture : {ctx.author.name}", color=color_var)
         embed.set_image(url="attachment://green.jpg")
         
     else:
         a=str(member.avatar_url)
-        req = requests.get(a).content
+        # req = requests.get(a).content
+
+        file = econify_by_url(a)
         
-
-        arr = np.asarray(bytearray(req), dtype=np.uint8)
-
-
-        img = cv2.imdecode(arr, -1)
-
-
-        canny = canny_img(img)
-        cv2.imwrite('canny.jpg', canny)
-        img = cv2.imread('canny.jpg')
-        b, g, r = cv2.split(img) 
-        blank = np.zeros(img.shape[:2], dtype='uint8')
-
-        green = cv2.merge([blank,g,blank])
-        
-        green = cv2.cvtColor(green, cv2.COLOR_BGR2RGB)
-        a=cv2.imwrite('green.jpg', green)
-        file=discord.File("green.jpg")
-        
-        embed = discord.Embed(title="Profile Picture : {}".format(member.name), color=color)
+        embed = discord.Embed(title="Profile Picture : {}".format(member.name), color=color_var)
         embed.set_image(url='attachment://green.jpg')
         
     await ctx.send(file=file, embed=embed)
