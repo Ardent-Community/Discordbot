@@ -88,6 +88,7 @@ def instagram_get(account, not_loop=False):
 @client.event
 async def on_ready():
     print("Ready")
+    channel=db['post_channel']
     DiscordComponents(client)         #for discord buttons
     channel=client.get_channel(870668217494953984)
     await channel.purge(limit=10000000000000000000)
@@ -140,9 +141,10 @@ async def on_reaction_add(reaction, user):
 async def link(ctx,chann:discord.TextChannel):
     global channel
     channel=chann.id
+    db['post_channel']=channel
     await ctx.message.delete()
     confirm=client.get_channel(channel)
-    await confirm.send("Channel set for updates")
+    await confirm.send(embed=discord.Embed(description="Channel set for updates",color=color_var))
 @client.command(aliases=['devfolio'])
 async def devfo(ctx):
   await ctx.send("You can register at https://econhacks-bangalore.devfolio.co/")
