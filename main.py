@@ -817,7 +817,7 @@ def econify_by_url(image_url:str):
 
 
     img = cv2.imdecode(arr, -1)
-    
+    img = cv2.resize(img, (400, 400))
     canny = canny_img(img)
     cv2.imwrite('canny.jpg', canny)
     img = cv2.imread('canny.jpg')
