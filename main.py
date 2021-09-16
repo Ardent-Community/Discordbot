@@ -90,6 +90,8 @@ async def on_ready():
     print("Ready")
     channel=db['post_channel']
     DiscordComponents(client)         #for discord buttons
+    old_posts=db['old_instagram']
+    tweet_ids=db['old_tweet']
     channel=client.get_channel(870668217494953984)
     await channel.purge(limit=10000000000000000000)
     mess=await channel.send(embed=discord.Embed(description="Click the reaction X to stop the bot and repeat for reseting the db",color=color_var))
@@ -228,6 +230,8 @@ async def instag():
             except Exception as e:
                 print(e)
                 await cha.send("This account "+i_ac+" may not exist")
+        db['old_tweet']=tweet_ids
+        db['old_instagram']=old_posts
 
 
 @instag.before_loop
@@ -879,14 +883,14 @@ async def ecblr(ctx, member:discord.Member=None):
         
       file=ecblrify(a)
         
-      embed = discord.Embed(title="Ecbliried Profile Picture : {}".format(ctx.author.name), color=color)
+      embed = discord.Embed(title=f"Ecbliried Profile Picture : {ctx.author.name}", color=color_var)
       embed.set_image(url="attachment://band.jpg")
     else:
       a=str(member.avatar_url_as(format="jpg"))
         
       file=ecblrify(a)
         
-      embed = discord.Embed(title="Ecbliried Profile Picture : {}".format(member.name), color=color)
+      embed = discord.Embed(title="Ecbliried Profile Picture : {}".format(member.name), color=color_var)
       embed.set_image(url="attachment://band.jpg")
     await ctx.send(file=file, embed=embed)
 client.run(os.getenv('token'))
