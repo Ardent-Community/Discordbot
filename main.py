@@ -842,7 +842,7 @@ async def econify(ctx, member:discord.Member=None):
         
         file = econify_by_url(a)
         
-        embed = discord.Embed(title=f"Profile Picture : {ctx.author.name}", color=color_var)
+        embed = discord.Embed(title=f"Econified Profile Picture : {ctx.author.name}", color=color_var)
         embed.set_image(url="attachment://green.jpg")
         
     else:
@@ -851,8 +851,42 @@ async def econify(ctx, member:discord.Member=None):
 
         file = econify_by_url(a)
         
-        embed = discord.Embed(title="Profile Picture : {}".format(member.name), color=color_var)
+        embed = discord.Embed(title="Econified Profile Picture : {}".format(member.name), color=color_var)
         embed.set_image(url='attachment://green.jpg')
         
+    await ctx.send(file=file, embed=embed)
+def ecblrify(a):
+    req = requests.get(a).content
+
+    arr = np.asarray(bytearray(req), dtype=np.uint8)
+
+
+    img = cv2.imdecode(arr, -1)
+
+    img = cv2.resize(img, (400, 400))
+    rick = cv2.imread('econhacks.jpg')
+    img=cv2.resize(img, (400, 400))
+    rick=cv2.resize(rick, (400, 400))
+    andy=cv2.bitwise_and(img, rick)
+    a=cv2.imwrite('band.jpg', andy)
+    return discord.File("band.jpg")
+
+@client.command()
+async def ecblr(ctx, member:discord.Member=None):
+    if member is None:
+      a=str(ctx.author.avatar_url_as(format="jpg"))
+      
+        
+      file=ecblrify(a)
+        
+      embed = discord.Embed(title="Ecbliried Profile Picture : {}".format(ctx.author.name), color=color)
+      embed.set_image(url="attachment://band.jpg")
+    else:
+      a=str(member.avatar_url_as(format="jpg"))
+        
+      file=ecblrify(a)
+        
+      embed = discord.Embed(title="Ecbliried Profile Picture : {}".format(member.name), color=color)
+      embed.set_image(url="attachment://band.jpg")
     await ctx.send(file=file, embed=embed)
 client.run(os.getenv('token'))
