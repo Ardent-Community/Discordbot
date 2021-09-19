@@ -204,6 +204,7 @@ async def help_menu(ctx):
     embed.add_field(name="Events", value="h!hdt to get hackathon dates")
     embed.add_field(name="Questions", value="h!ques to drop your questions and our team will answer")
     embed.add_field(name="Games", value="h!games to play some mini games and gain some points")
+    embed.add_field(name="Filters", value="h!econify and h!ecblr to put some custom effects on you profile picture")
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
 
