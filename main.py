@@ -108,7 +108,7 @@ I'm Econbot (I'm only a computer program), created to help you during your stay 
 
 Before I proceed any further, please make sure to review over the following things (they're very important):
 
-> **1.** Make sure you've registered on Devfolio (if not, go to [this link](https://econhacks-bangalore.devfolio.co/) or type **h!devfolio** and I'll send over a link!)
+> **1.** Make sure you've registered on Devfolio (if not, go to [this link](https://econhacks-bangalore.devfolio.co/) or type **h!devfolio** and I'll send over a link!\nHere is a video to guide you - https://www.youtube.com/watch?v=5tIUNEDOcc4)
 > **2.** Make sure you've read through the <#853856408512626688> and <#853858318242414603> channels. 
 
 Once you're done the above, here are some reminders of how to proceed in the server:
@@ -149,7 +149,7 @@ async def link(ctx,chann:discord.TextChannel):
     await confirm.send(embed=discord.Embed(description="Channel set for updates",color=color_var))
 @client.command(aliases=['devfolio'])
 async def devfo(ctx):
-  await ctx.send("You can register at https://econhacks-bangalore.devfolio.co/")
+  await ctx.send("You can register on Devfolio using this link -  https://econhacks-bangalore.devfolio.co/\nHere is a video to guide you - https://www.youtube.com/watch?v=5tIUNEDOcc4")
 @client.command(aliases=['link-insta'])
 async def add_insta(ctx,*, account):
     global instagram_accounts
@@ -350,7 +350,7 @@ async def ques(ctx, *, question):
                 embed = ask_embed("Prizes", "There is over 30 lakhs in the prizepool just waiting to be won bu talented people like you!")
                 await ctx.send(embed=embed)
             elif intent == "Register":
-                embed = ask_embed("How Do I Register", "You can register on Devfolio using this link -  https://econhacks-bangalore.devfolio.co/")
+                embed = ask_embed("How Do I Register", "You can register on Devfolio using this link -  https://econhacks-bangalore.devfolio.co/\nHere is a video to guide you - https://www.youtube.com/watch?v=5tIUNEDOcc4")
                 await ctx.send(embed=embed)
             elif intent == "Sponsor":
                 embed = ask_embed("Who Are The Sponsors", "This hackathon has been made possible by amazing sponsors Qoom, Devfolio, Slingshot, EchoAR, Gather,  Replit, Portis, Polygon, Tezos, Celo and Balsmiq")
@@ -368,7 +368,7 @@ async def ques(ctx, *, question):
                 embed = ask_embed("What Is A Hackathon", "A hackathon is best described as an “invention marathon”. Anyone who has an interest in technology attends a hackathon to learn, build & share their creations over the course of a weekend in a relaxed and welcoming atmosphere. You don’t have to be a programmer and you certainly don’t have to be majoring in Computer Science.")
                 await ctx.send(embed=embed)
             elif intent == "Who_can_take_part":
-                embed = ask_embed("Who Can Take Part", "All high and middle school students are eligible to participate in this awesome hackathon!")
+                embed = ask_embed("Who Can Take Part", "All college, high and middle school students are eligible to participate in this awesome hackathon!")
                 await ctx.send(embed=embed)
             elif intent == "Does_it_have_to_be_a_new_project":
               embed = ask_embed("Can we work on it before the hackathon starts", "No, the projects have to be developed during the timeframe and previous worked on projects cannot be submitted.")
