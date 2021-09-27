@@ -894,4 +894,25 @@ async def ecblr(ctx, member:discord.Member=None):
       embed = discord.Embed(title="Ecbliried Profile Picture : {}".format(member.name), color=color_var)
       embed.set_image(url="attachment://band.jpg")
     await ctx.send(file=file, embed=embed)
+def ecframed(a):
+    req = requests.get(a).content
+    arr = np.asarray(bytearray(req), dtype=np.uint8)
+
+    guy_img = cv2.imdecode(arr, -1)
+
+    target_img = cv2.imread('EconHacks_Bangalore.jpg')
+    mask=cv2.resize(guy_img, (166, 166))
+
+    target_img[212:(212+mask.shape[0]), 77:(77+mask.shape[1])] = mask
+
+    cv2.imwrite('FinalEcon.jpg', target_img)
+    return discord.File("FinalEcon.jpg")
+@client.command()
+async def ecframe(ctx, member: discord.Member = None):
+    member=ctx.author if member is None else member
+    file = ecframed(str(member.avatar_url_as(format="jpg")))
+    embed = discord.Embed(title="Profile Picture : {}".format(member.name),color=color_var)   
+    embed.set_image(url="attachment://FinalEcon.jpg")
+    await ctx.send(file=file, embed=embed)
+
 client.run(os.getenv('token'))
