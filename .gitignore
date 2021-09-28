@@ -5,3 +5,5 @@ level.json
 canny.jpg
 green.jpg
 band.jpg
+*.png
+*.jpg
