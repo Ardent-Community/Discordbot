@@ -88,7 +88,10 @@ def instagram_get(account, not_loop=False):
 @client.event
 async def on_ready():
     print("Ready")
+    channel=db['post_channel']
     DiscordComponents(client)         #for discord buttons
+    old_posts=db['old_instagram']
+    tweet_ids=db['old_tweet']
     channel=client.get_channel(870668217494953984)
     await channel.purge(limit=10000000000000000000)
     mess=await channel.send(embed=discord.Embed(description="Click the reaction X to stop the bot and repeat for reseting the db",color=color_var))
@@ -105,7 +108,7 @@ I'm Econbot (I'm only a computer program), created to help you during your stay 
 
 Before I proceed any further, please make sure to review over the following things (they're very important):
 
-> **1.** Make sure you've registered on Devfolio (if not, go to [this link](https://econhacks-bangalore.devfolio.co/) or type **h!devfolio** and I'll send over a link!)
+> **1.** Make sure you've registered on Devfolio (if not, go to [this link](https://econhacks-bangalore.devfolio.co/) or type **h!devfolio** and I'll send over a link!\nHere is a video to guide you - https://www.youtube.com/watch?v=5tIUNEDOcc4)
 > **2.** Make sure you've read through the <#853856408512626688> and <#853858318242414603> channels. 
 
 Once you're done the above, here are some reminders of how to proceed in the server:
@@ -140,12 +143,13 @@ async def on_reaction_add(reaction, user):
 async def link(ctx,chann:discord.TextChannel):
     global channel
     channel=chann.id
+    db['post_channel']=channel
     await ctx.message.delete()
     confirm=client.get_channel(channel)
-    await confirm.send("Channel set for updates")
+    await confirm.send(embed=discord.Embed(description="Channel set for updates",color=color_var))
 @client.command(aliases=['devfolio'])
 async def devfo(ctx):
-  await ctx.send("You can register at https://econhacks-bangalore.devfolio.co/")
+  await ctx.send("You can register on Devfolio using this link -  https://econhacks-bangalore.devfolio.co/\nHere is a video to guide you - https://www.youtube.com/watch?v=5tIUNEDOcc4")
 @client.command(aliases=['link-insta'])
 async def add_insta(ctx,*, account):
     global instagram_accounts
@@ -200,6 +204,7 @@ async def help_menu(ctx):
     embed.add_field(name="Events", value="h!hdt to get hackathon dates")
     embed.add_field(name="Questions", value="h!ques to drop your questions and our team will answer")
     embed.add_field(name="Games", value="h!games to play some mini games and gain some points")
+    embed.add_field(name="Filters", value="h!econify and h!ecblr to put some custom effects on you profile picture")
     embed.add_field(name="Addtional Queries", value="`ansh@econhacks.org`")
     await ctx.send(embed=embed)
 
@@ -226,6 +231,8 @@ async def instag():
             except Exception as e:
                 print(e)
                 await cha.send("This account "+i_ac+" may not exist")
+        db['old_tweet']=tweet_ids
+        db['old_instagram']=old_posts
 
 
 @instag.before_loop
@@ -343,7 +350,7 @@ async def ques(ctx, *, question):
                 embed = ask_embed("Prizes", "There is over 30 lakhs in the prizepool just waiting to be won bu talented people like you!")
                 await ctx.send(embed=embed)
             elif intent == "Register":
-                embed = ask_embed("How Do I Register", "You can register on Devfolio using this link -  https://econhacks-bangalore.devfolio.co/")
+                embed = ask_embed("How Do I Register", "You can register on Devfolio using this link -  https://econhacks-bangalore.devfolio.co/\nHere is a video to guide you - https://www.youtube.com/watch?v=5tIUNEDOcc4")
                 await ctx.send(embed=embed)
             elif intent == "Sponsor":
                 embed = ask_embed("Who Are The Sponsors", "This hackathon has been made possible by amazing sponsors Qoom, Devfolio, Slingshot, EchoAR, Gather,  Replit, Portis, Polygon, Tezos, Celo and Balsmiq")
@@ -361,7 +368,7 @@ async def ques(ctx, *, question):
                 embed = ask_embed("What Is A Hackathon", "A hackathon is best described as an “invention marathon”. Anyone who has an interest in technology attends a hackathon to learn, build & share their creations over the course of a weekend in a relaxed and welcoming atmosphere. You don’t have to be a programmer and you certainly don’t have to be majoring in Computer Science.")
                 await ctx.send(embed=embed)
             elif intent == "Who_can_take_part":
-                embed = ask_embed("Who Can Take Part", "All high and middle school students are eligible to participate in this awesome hackathon!")
+                embed = ask_embed("Who Can Take Part", "All college, high and middle school students are eligible to participate in this awesome hackathon!")
                 await ctx.send(embed=embed)
             elif intent == "Does_it_have_to_be_a_new_project":
               embed = ask_embed("Can we work on it before the hackathon starts", "No, the projects have to be developed during the timeframe and previous worked on projects cannot be submitted.")
@@ -817,7 +824,7 @@ def econify_by_url(image_url:str):
 
 
     img = cv2.imdecode(arr, -1)
-    
+    img = cv2.resize(img, (400, 400))
     canny = canny_img(img)
     cv2.imwrite('canny.jpg', canny)
     img = cv2.imread('canny.jpg')
@@ -840,7 +847,7 @@ async def econify(ctx, member:discord.Member=None):
         
         file = econify_by_url(a)
         
-        embed = discord.Embed(title=f"Profile Picture : {ctx.author.name}", color=color_var)
+        embed = discord.Embed(title=f"Econified Profile Picture : {ctx.author.name}", color=color_var)
         embed.set_image(url="attachment://green.jpg")
         
     else:
@@ -849,8 +856,71 @@ async def econify(ctx, member:discord.Member=None):
 
         file = econify_by_url(a)
         
-        embed = discord.Embed(title="Profile Picture : {}".format(member.name), color=color_var)
+        embed = discord.Embed(title="Econified Profile Picture : {}".format(member.name), color=color_var)
         embed.set_image(url='attachment://green.jpg')
         
     await ctx.send(file=file, embed=embed)
+def ecblrify(a):
+    req = requests.get(a).content
+
+    arr = np.asarray(bytearray(req), dtype=np.uint8)
+
+
+    img = cv2.imdecode(arr, -1)
+
+    img = cv2.resize(img, (400, 400))
+    rick = cv2.imread('econhacks.jpg')
+    img=cv2.resize(img, (400, 400))
+    rick=cv2.resize(rick, (400, 400))
+    andy=cv2.bitwise_and(img, rick)
+    a=cv2.imwrite('band.jpg', andy)
+    return discord.File("band.jpg")
+
+@client.command()
+async def ecblr(ctx, member:discord.Member=None):
+    if member is None:
+      a=str(ctx.author.avatar_url_as(format="jpg"))
+      
+        
+      file=ecblrify(a)
+        
+      embed = discord.Embed(title=f"Ecbliried Profile Picture : {ctx.author.name}", color=color_var)
+      embed.set_image(url="attachment://band.jpg")
+    else:
+      a=str(member.avatar_url_as(format="jpg"))
+        
+      file=ecblrify(a)
+        
+      embed = discord.Embed(title="Ecbliried Profile Picture : {}".format(member.name), color=color_var)
+      embed.set_image(url="attachment://band.jpg")
+    await ctx.send(file=file, embed=embed)
+def ecframed(a):
+    req = requests.get(a).content
+    arr = np.asarray(bytearray(req), dtype=np.uint8)
+
+    guy_img = cv2.imdecode(arr, -1)
+
+    target_img = cv2.imread('EconHacks_Bangalore.jpg')
+    mask=cv2.resize(guy_img, (166, 166))
+
+    target_img[212:(212+mask.shape[0]), 77:(77+mask.shape[1])] = mask
+
+    cv2.imwrite('FinalEcon.jpg', target_img)
+    return discord.File("FinalEcon.jpg")
+@client.command()
+async def ecframe(ctx, member: discord.Member = None):
+    member=ctx.author if member is None else member
+    file = ecframed(str(member.avatar_url_as(format="jpg")))
+    embed = discord.Embed(title="Profile Picture : {}".format(member.name),color=color_var)   
+    embed.set_image(url="attachment://FinalEcon.jpg")
+    await ctx.send(file=file, embed=embed)
+
+@client.command()
+async def motivate(ctx):
+    quote=requests.get("https://efflux.herokuapp.com/post").json()['p']
+    embed = discord.Embed(title="Motivational Post", color=0x00ff00) #creates embed
+    embed.set_image(url=quote)
+    embed.add_field(name='\u200B',value="Data fetched from [efflux API](https://efflux.herokuapp.com/)")
+    await ctx.reply(embed=embed)
+  
 client.run(os.getenv('token'))
